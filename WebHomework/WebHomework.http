@@ -1,0 +1,30 @@
+@WebHomework_HostAddress = https://localhost:7224
+
+GET {{WebHomework_HostAddress}}/contacts
+Accept: application/json
+
+###
+
+GET {{WebHomework_HostAddress}}/api/contacts
+
+###
+
+POST {{WebHomework_HostAddress}}/api/contacts
+Content-Type: application/json
+
+{
+  "Id": 1,
+  "Name": "Vladimir",
+  "Address": "dr Ivan Stranski"
+}
+
+###
+
+@id=0
+DELETE {{WebHomework_HostAddress}}/api/contacts/{{id}}
+
+###
+
+GET {{WebHomework_HostAddress}}/api/contacts/{{id}}
+
+###
