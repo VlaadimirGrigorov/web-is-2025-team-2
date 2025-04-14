@@ -207,14 +207,14 @@
         }
       }
     },
-    "/api/contacts/{contactId}/add-phone": {
+    "/{id}/phonenumbers": {
       "post": {
         "tags": [
           "Contacts"
         ],
         "parameters": [
           {
-            "name": "contactId",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -248,17 +248,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/PhoneNumber"
+                  "$ref": "#/components/schemas/Contact"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PhoneNumber"
+                  "$ref": "#/components/schemas/Contact"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PhoneNumber"
+                  "$ref": "#/components/schemas/Contact"
                 }
               }
             }
@@ -266,14 +266,14 @@
         }
       }
     },
-    "/api/contacts/{contactId}/delete-phone/{phoneId}": {
+    "/{id}/phonenumbers/{phoneId}": {
       "delete": {
         "tags": [
           "Contacts"
         ],
         "parameters": [
           {
-            "name": "contactId",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -293,19 +293,36 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contact"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contact"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contact"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/contacts/{contactId}/update-phone/{phoneId}": {
-      "put": {
+    "/api/contacts/{id}/phonenumbers/{phoneId}": {
+      "patch": {
         "tags": [
           "Contacts"
         ],
         "parameters": [
           {
-            "name": "contactId",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -321,15 +338,27 @@
               "type": "integer",
               "format": "int32"
             }
-          },
-          {
-            "name": "phoneNumber",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneNumber"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneNumber"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneNumber"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -392,13 +421,11 @@
           },
           "createdAt": {
             "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "updatedAt": {
             "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           }
         },
         "additionalProperties": false

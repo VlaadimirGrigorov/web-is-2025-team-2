@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("WebHomework")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a8c9f45e609003eb7e3cd24c11f89d25ad784939")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fae2e02fa3b9c1434c1b15ee597f6b5ccbca7ff2")]
 [assembly: System.Reflection.AssemblyProductAttribute("WebHomework")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WebHomework")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
