@@ -13,14 +13,14 @@
         "IsRequired": true
       },
       {
-        "Name": "phoneNumber",
-        "Type": "WebHomework.Models.PhoneNumber",
+        "Name": "phoneNumberDto",
+        "Type": "WebHomework.DTOs.PhoneNumberRequestDto",
         "IsRequired": true
       }
     ],
     "ReturnTypes": [
       {
-        "Type": "WebHomework.Models.Contact",
+        "Type": "WebHomework.DTOs.PhoneNumberResponseDto",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -51,7 +51,7 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "WebHomework.Models.Contact",
+        "Type": "WebHomework.DTOs.PhoneNumberResponseDto",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -71,7 +71,7 @@
     "Parameters": [],
     "ReturnTypes": [
       {
-        "Type": "System.Collections.Generic.List\u00601[[WebHomework.Models.Contact, WebHomework, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "Type": "System.Collections.Generic.List\u00601[[WebHomework.DTOs.ContactResponseDto, WebHomework, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -90,14 +90,14 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "contact",
-        "Type": "WebHomework.Models.Contact",
+        "Name": "contactDto",
+        "Type": "WebHomework.DTOs.ContactRequestDto",
         "IsRequired": true
       }
     ],
     "ReturnTypes": [
       {
-        "Type": "WebHomework.Models.Contact",
+        "Type": "WebHomework.DTOs.ContactResponseDto",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -123,7 +123,7 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "WebHomework.Models.Contact",
+        "Type": "WebHomework.DTOs.ContactResponseDto",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -149,7 +149,7 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "WebHomework.Models.Contact",
+        "Type": "WebHomework.DTOs.ContactResponseDto",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -173,12 +173,22 @@
         "IsRequired": true
       },
       {
-        "Name": "updatedContact",
-        "Type": "WebHomework.Models.Contact",
+        "Name": "updatedContactDto",
+        "Type": "WebHomework.DTOs.ContactRequestDto",
         "IsRequired": true
       }
     ],
-    "ReturnTypes": []
+    "ReturnTypes": [
+      {
+        "Type": "WebHomework.DTOs.ContactResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "WebHomework.Controllers.ContactsController",
@@ -199,11 +209,21 @@
         "IsRequired": true
       },
       {
-        "Name": "phoneNumber",
-        "Type": "WebHomework.Models.PhoneNumber",
+        "Name": "phoneNumberDto",
+        "Type": "WebHomework.DTOs.PhoneNumberRequestDto",
         "IsRequired": true
       }
     ],
-    "ReturnTypes": []
+    "ReturnTypes": [
+      {
+        "Type": "WebHomework.DTOs.PhoneNumberResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   }
 ]

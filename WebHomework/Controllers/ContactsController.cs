@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebHomework.Data;
+using WebHomework.DTOs;
 using WebHomework.Models;
+using WebHomework.Mappers;
 
 namespace WebHomework.Controllers
 {
@@ -17,13 +19,15 @@ namespace WebHomework.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Contact>>> GetContacts()
+        public async Task<ActionResult<List<ContactResponseDto>>> GetContacts()
         {
-            return await _context.Contacts.Include(c => c.PhoneNumbers).Include(c => c.Address).ToListAsync();
+            var contacts = await _context.Contacts.Include(c => c.PhoneNumbers).Include(c => c.Address).ToListAsync();
+
+            return contacts.Select(DtoMappers.ToDto).ToList();
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Contact>> GetContact(int id)
+        public async Task<ActionResult<ContactResponseDto>> GetContact(int id)
         {
             var contact = await _context.Contacts
                                 .Include(c => c.Address)
@@ -35,22 +39,26 @@ namespace WebHomework.Controllers
                 return NotFound();
             }
 
-            return contact;
+            var response = DtoMappers.ToDto(contact);
+
+            return Ok(response);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Contact>> AddContact(Contact contact)
+        public async Task<ActionResult<ContactResponseDto>> AddContact(ContactRequestDto contactDto)
         {
-            foreach(var phoneNumber in contact.PhoneNumbers)
+            foreach(var phoneNumber in contactDto.PhoneNumbers)
             {
-                if (phoneNumber.Number == null || !isValidPhoneNumber(phoneNumber.Number))
+                if (!IsValidPhoneNumber(phoneNumber.Number))
                 {
                     return BadRequest("Invalid phone number!");
                 }
             }
 
-            var existingContact = await _context.Contacts.FindAsync(contact.Id);
-            if (existingContact != null)
+            var contact = DtoMappers.ToEntity(contactDto);
+
+            var contactExists = await _context.Contacts.Include(c => c.Address).Include(c => c.PhoneNumbers).FirstOrDefaultAsync(c => c.Id == contact.Id);
+            if (contactExists != null)
             {
                 return Conflict("Contact already exists!");
             }
@@ -58,13 +66,15 @@ namespace WebHomework.Controllers
             _context.Contacts.Add(contact);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetContact), new { id = contact.Id }, contact);
+            var response = DtoMappers.ToDto(contact);
+
+            return CreatedAtAction(nameof(GetContact), new { id = response.Id }, response);
         }
 
         [HttpPost("/{id}/phonenumbers")]
-        public async Task<ActionResult<Contact>> AddPhoneToContact(int id, PhoneNumber phoneNumber)
+        public async Task<ActionResult<PhoneNumberResponseDto>> AddPhoneToContact(int id, PhoneNumberRequestDto phoneNumberDto)
         {
-            if (phoneNumber.Number == null || !isValidPhoneNumber(phoneNumber.Number))
+            if (!IsValidPhoneNumber(phoneNumberDto.Number))
             {
                 return BadRequest($"Invalid phone number!");
             }
@@ -75,36 +85,42 @@ namespace WebHomework.Controllers
                 return NotFound($"Contact with id {id} was not found!");
             }
 
-            var exist = await _context.PhoneNumbers.FirstOrDefaultAsync(c => c.Number == phoneNumber.Number);
+            var exist = await _context.PhoneNumbers.FirstOrDefaultAsync(c => c.Number == phoneNumberDto.Number);
             if (exist != null)
             {
-                return Conflict($"Phone number {phoneNumber.Number} already exists!");
+                return Conflict($"Phone number {phoneNumberDto.Number} already exists!");
             }
+
+            var phoneNumber = DtoMappers.ToEntity(phoneNumberDto);
 
             contact.PhoneNumbers.Add(phoneNumber);
             
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetContact), new { id = contact.Id }, phoneNumber);
+            var response = DtoMappers.ToDto(phoneNumber);
+
+            return CreatedAtAction(nameof(GetContact), new { id = response.Id }, response);
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<Contact>> DeleteContact(int id)
+        public async Task<ActionResult<ContactResponseDto>> DeleteContact(int id)
         {
-            var existingContact = await _context.Contacts.Include(c => c.Address).Include(c => c.PhoneNumbers).FirstOrDefaultAsync(c => c.Id == id);
-            if (existingContact == null)
+            var contact = await _context.Contacts.Include(c => c.Address).Include(c => c.PhoneNumbers).FirstOrDefaultAsync(c => c.Id == id);
+            if (contact == null)
             {
                 return NotFound($"Contact with id {id} doesn't exist!");
             }
 
-            _context.Contacts.Remove(existingContact);
+            _context.Contacts.Remove(contact);
             await _context.SaveChangesAsync();
 
-            return Ok();
+            var response = DtoMappers.ToDto(contact);
+
+            return Ok(response);
         }
 
         [HttpDelete("/{id}/phonenumbers/{phoneId}")]
-        public async Task<ActionResult<Contact>> DeletePhoneNumberFromContact(int id, int phoneId)
+        public async Task<ActionResult<PhoneNumberResponseDto>> DeletePhoneNumberFromContact(int id, int phoneId)
         {
             var contact = await _context.Contacts.Include(c => c.PhoneNumbers).Include(c => c.Address).FirstOrDefaultAsync(c => c.Id == id);
             if (contact == null)
@@ -127,11 +143,13 @@ namespace WebHomework.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok();
+            var response = DtoMappers.ToDto(phoneNumber);
+
+            return Ok(response);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateContact([FromRoute] int id, [FromBody] Contact updatedContact)
+        public async Task<ActionResult<ContactResponseDto>> UpdateContact([FromRoute] int id, [FromBody] ContactRequestDto updatedContactDto)
         {
             var contact = await _context.Contacts.Include(c => c.PhoneNumbers).Include(c => c.Address).FirstOrDefaultAsync(c => c.Id == id);
 
@@ -140,15 +158,19 @@ namespace WebHomework.Controllers
                 return NotFound();
             }
 
+            var updatedContact = DtoMappers.ToEntity(updatedContactDto);
+
             changeSpecificFields(contact, updatedContact);
 
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            var response = DtoMappers.ToDto(contact);
+
+            return Ok(response);
         }
 
         [HttpPatch("{id}/phonenumbers/{phoneId}")]
-        public async Task<IActionResult> UpdatePhoneNumberInContact(int id, int phoneId, PhoneNumber phoneNumber)
+        public async Task<ActionResult<PhoneNumberResponseDto>> UpdatePhoneNumberInContact(int id, int phoneId, PhoneNumberRequestDto phoneNumberDto)
         {
             var contact = await _context.Contacts.Include(c => c.PhoneNumbers).Include(c => c.Address).FirstOrDefaultAsync(c => c.Id == id);
             if (contact == null)
@@ -168,14 +190,13 @@ namespace WebHomework.Controllers
             }
 
             var phone = contact.PhoneNumbers.FirstOrDefault(c => c.Id == phoneId);
-            if (phone != null)
-            {
-                phone.Number = phoneNumber.Number;
-            }
+            phone.Number = phoneNumberDto.Number;
 
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            var response = DtoMappers.ToDto(phone);
+
+            return Ok(response);
         }
 
         private void changeSpecificFields(Contact contact, Contact updatedContact)
@@ -193,7 +214,10 @@ namespace WebHomework.Controllers
                 contact.Address.PostalCode = updatedContact.Address.PostalCode ?? contact.Address.PostalCode;
             }
 
-            if (updatedContact.PhoneNumbers != null)
+            var updatedNumbers = updatedContact.PhoneNumbers.Select(p => p.Number).ToList();
+            var currentNumbers = contact.PhoneNumbers.Select(p => p.Number).ToList();
+
+            if (!updatedNumbers.SequenceEqual(currentNumbers))
             {
                 contact.PhoneNumbers.Clear();
                 foreach (var phone in updatedContact.PhoneNumbers)
@@ -205,7 +229,7 @@ namespace WebHomework.Controllers
             contact.UpdatedAt = DateTime.Now;
         }
 
-        private bool isValidPhoneNumber(string? phoneNumber)
+        private bool IsValidPhoneNumber(string? phoneNumber)
         {
             if (string.IsNullOrEmpty(phoneNumber) || phoneNumber.Length > 10)
                 return false;
