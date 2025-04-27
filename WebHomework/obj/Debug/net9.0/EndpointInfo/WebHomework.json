@@ -224,7 +224,7 @@
         }
       }
     },
-    "/{id}/phonenumbers": {
+    "/api/contacts/{id}/phonenumbers": {
       "post": {
         "tags": [
           "Contacts"
@@ -283,7 +283,7 @@
         }
       }
     },
-    "/{id}/phonenumbers/{phoneId}": {
+    "/api/contacts/{id}/phonenumbers/{phoneId}": {
       "delete": {
         "tags": [
           "Contacts"
@@ -330,9 +330,7 @@
             }
           }
         }
-      }
-    },
-    "/api/contacts/{id}/phonenumbers/{phoneId}": {
+      },
       "patch": {
         "tags": [
           "Contacts"

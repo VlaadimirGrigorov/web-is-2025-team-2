@@ -1,68 +1,6 @@
 [
   {
     "ContainingType": "WebHomework.Controllers.ContactsController",
-    "Method": "AddPhoneToContact",
-    "RelativePath": "{id}/phonenumbers",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "phoneNumberDto",
-        "Type": "WebHomework.DTOs.PhoneNumberRequestDto",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "WebHomework.DTOs.PhoneNumberResponseDto",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "WebHomework.Controllers.ContactsController",
-    "Method": "DeletePhoneNumberFromContact",
-    "RelativePath": "{id}/phonenumbers/{phoneId}",
-    "HttpMethod": "DELETE",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "phoneId",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "WebHomework.DTOs.PhoneNumberResponseDto",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "WebHomework.Controllers.ContactsController",
     "Method": "GetContacts",
     "RelativePath": "api/contacts",
     "HttpMethod": "GET",
@@ -181,6 +119,68 @@
     "ReturnTypes": [
       {
         "Type": "WebHomework.DTOs.ContactResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "WebHomework.Controllers.ContactsController",
+    "Method": "AddPhoneToContact",
+    "RelativePath": "api/contacts/{id}/phonenumbers",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "phoneNumberDto",
+        "Type": "WebHomework.DTOs.PhoneNumberRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "WebHomework.DTOs.PhoneNumberResponseDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "WebHomework.Controllers.ContactsController",
+    "Method": "DeletePhoneNumberFromContact",
+    "RelativePath": "api/contacts/{id}/phonenumbers/{phoneId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "phoneId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "WebHomework.DTOs.PhoneNumberResponseDto",
         "MediaTypes": [
           "text/plain",
           "application/json",

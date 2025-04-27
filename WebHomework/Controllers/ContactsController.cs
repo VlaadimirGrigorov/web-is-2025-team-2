@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebHomework.Data;
 using WebHomework.DTOs;
-using WebHomework.Models;
-using WebHomework.Mappers;
+using WebHomework.Helpers;
+using WebHomework.Repository;
 
 namespace WebHomework.Controllers
 {
@@ -11,230 +9,207 @@ namespace WebHomework.Controllers
     [ApiController]
     public class ContactsController : ControllerBase
     {
-        private readonly PhoneBookContext _context;
+        private readonly IContactRepository _contactRepository;
 
-        public ContactsController(PhoneBookContext context)
+        public ContactsController(IContactRepository contactRepository)
         {
-            _context = context;
+            this._contactRepository = contactRepository;
         }
 
         [HttpGet]
         public async Task<ActionResult<List<ContactResponseDto>>> GetContacts()
         {
-            var contacts = await _context.Contacts.Include(c => c.PhoneNumbers).Include(c => c.Address).ToListAsync();
-
-            return contacts.Select(DtoMappers.ToDto).ToList();
+            try
+            {
+                return Ok(await _contactRepository.GetContacts());
+            }
+            catch(Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ContactResponseDto>> GetContact(int id)
         {
-            var contact = await _context.Contacts
-                                .Include(c => c.Address)
-                                .Include(c => c.PhoneNumbers)
-                                .FirstOrDefaultAsync(c => c.Id == id);
-
-            if (contact == null)
+            try
             {
-                return NotFound();
+                var contact = await _contactRepository.GetContact(id);
+
+                if (contact == null)
+                {
+                    return NotFound();
+                }
+
+                return contact;
             }
-
-            var response = DtoMappers.ToDto(contact);
-
-            return Ok(response);
+            catch(Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
+            }
         }
 
         [HttpPost]
         public async Task<ActionResult<ContactResponseDto>> AddContact(ContactRequestDto contactDto)
         {
-            foreach(var phoneNumber in contactDto.PhoneNumbers)
+            try
             {
-                if (!IsValidPhoneNumber(phoneNumber.Number))
+                // check the phone numbers
+                foreach (var phoneNumber in contactDto.PhoneNumbers)
                 {
-                    return BadRequest("Invalid phone number!");
+                    if (!GenericHelpers.IsValidPhoneNumber(phoneNumber.Number))
+                    {
+                        return BadRequest("Invalid phone number!");
+                    }
                 }
+
+                var result = await _contactRepository.AddContact(contactDto);
+                if (result == null)
+                {
+                    return Conflict("Contact already exists!");
+                }
+
+                return CreatedAtAction(nameof(GetContact), new { id = result?.Id }, result);
             }
-
-            var contact = DtoMappers.ToEntity(contactDto);
-
-            var contactExists = await _context.Contacts.Include(c => c.Address).Include(c => c.PhoneNumbers).FirstOrDefaultAsync(c => c.Id == contact.Id);
-            if (contactExists != null)
+            catch(Exception)
             {
-                return Conflict("Contact already exists!");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
             }
-
-            _context.Contacts.Add(contact);
-            await _context.SaveChangesAsync();
-
-            var response = DtoMappers.ToDto(contact);
-
-            return CreatedAtAction(nameof(GetContact), new { id = response.Id }, response);
         }
 
-        [HttpPost("/{id}/phonenumbers")]
+        [HttpPost("{id}/phonenumbers")]
         public async Task<ActionResult<PhoneNumberResponseDto>> AddPhoneToContact(int id, PhoneNumberRequestDto phoneNumberDto)
         {
-            if (!IsValidPhoneNumber(phoneNumberDto.Number))
+            try
             {
-                return BadRequest($"Invalid phone number!");
-            }
+                if (!GenericHelpers.IsValidPhoneNumber(phoneNumberDto.Number))
+                {
+                    return BadRequest($"Invalid phone number!");
+                }
 
-            var contact = await _context.Contacts.Include(c => c.PhoneNumbers).Include(c => c.Address).FirstOrDefaultAsync(c => c.Id == id);
-            if (contact == null)
+                var result = await _contactRepository.AddPhoneToContact(id, phoneNumberDto);
+                if (!result.Success)
+                {
+                    if (result.Error == $"Contact with id {id} was not found!")
+                    {
+                        return NotFound(result.Error);
+                    }
+                    if (result.Error == $"Phone number {phoneNumberDto.Number} already exists!")
+                    {
+                        return NotFound(result.Error);
+                    }
+
+                    return BadRequest(result.Error);
+                }
+
+                return CreatedAtAction(nameof(GetContact), new { id = result.Data?.Id }, result.Data);
+            }
+            catch(Exception)
             {
-                return NotFound($"Contact with id {id} was not found!");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
             }
-
-            var exist = await _context.PhoneNumbers.FirstOrDefaultAsync(c => c.Number == phoneNumberDto.Number);
-            if (exist != null)
-            {
-                return Conflict($"Phone number {phoneNumberDto.Number} already exists!");
-            }
-
-            var phoneNumber = DtoMappers.ToEntity(phoneNumberDto);
-
-            contact.PhoneNumbers.Add(phoneNumber);
-            
-            await _context.SaveChangesAsync();
-
-            var response = DtoMappers.ToDto(phoneNumber);
-
-            return CreatedAtAction(nameof(GetContact), new { id = response.Id }, response);
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult<ContactResponseDto>> DeleteContact(int id)
         {
-            var contact = await _context.Contacts.Include(c => c.Address).Include(c => c.PhoneNumbers).FirstOrDefaultAsync(c => c.Id == id);
-            if (contact == null)
+            try
             {
-                return NotFound($"Contact with id {id} doesn't exist!");
+                var contact = await _contactRepository.DeleteContact(id);
+                if (contact == null)
+                {
+                    return NotFound($"Contact with id {id} doesn't exist!");
+                }
+
+                return contact;
             }
-
-            _context.Contacts.Remove(contact);
-            await _context.SaveChangesAsync();
-
-            var response = DtoMappers.ToDto(contact);
-
-            return Ok(response);
+            catch(Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
+            }
         }
 
-        [HttpDelete("/{id}/phonenumbers/{phoneId}")]
+        [HttpDelete("{id}/phonenumbers/{phoneId}")]
         public async Task<ActionResult<PhoneNumberResponseDto>> DeletePhoneNumberFromContact(int id, int phoneId)
         {
-            var contact = await _context.Contacts.Include(c => c.PhoneNumbers).Include(c => c.Address).FirstOrDefaultAsync(c => c.Id == id);
-            if (contact == null)
+            try
             {
-                return NotFound($"Contact with id {id} was not found!");
-            }
+                var result = await _contactRepository.DeletePhoneNumberFromContact(id, phoneId);
 
-            var phoneNumber = await _context.PhoneNumbers.FirstOrDefaultAsync(c => c.Id == phoneId);
-            if (phoneNumber == null)
+                if (!result.Success)
+                {
+                    if (result.Error == $"Contact with id {id} was not found!")
+                    {
+                        return NotFound(result.Error);
+                    }
+                    else if (result.Error == $"Phone number with id {phoneId} was not found!")
+                    {
+                        return NotFound(result.Error);
+                    }
+
+                    return BadRequest(result.Error);
+                }
+
+                return Ok(result.Data);
+            }
+            catch(Exception)
             {
-                return NotFound($"Phone number with id {phoneId} was not found!");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
             }
-
-            if (!contact.PhoneNumbers.Any(c => c.Id == phoneId))
-            {
-                return BadRequest($"Phone number with id {phoneId} does not belong to contact with id {id}.");
-            }
-
-            contact.PhoneNumbers.Remove(phoneNumber);
-
-            await _context.SaveChangesAsync();
-
-            var response = DtoMappers.ToDto(phoneNumber);
-
-            return Ok(response);
         }
 
         [HttpPut("{id}")]
         public async Task<ActionResult<ContactResponseDto>> UpdateContact([FromRoute] int id, [FromBody] ContactRequestDto updatedContactDto)
         {
-            var contact = await _context.Contacts.Include(c => c.PhoneNumbers).Include(c => c.Address).FirstOrDefaultAsync(c => c.Id == id);
-
-            if (contact == null)
+            try
             {
-                return NotFound();
+                var contact = await _contactRepository.UpdateContact(id, updatedContactDto);
+
+                if (contact == null)
+                {
+                    return NotFound();
+                }
+
+                return contact;
             }
-
-            var updatedContact = DtoMappers.ToEntity(updatedContactDto);
-
-            changeSpecificFields(contact, updatedContact);
-
-            await _context.SaveChangesAsync();
-
-            var response = DtoMappers.ToDto(contact);
-
-            return Ok(response);
+            catch(Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
+            }
         }
 
         [HttpPatch("{id}/phonenumbers/{phoneId}")]
         public async Task<ActionResult<PhoneNumberResponseDto>> UpdatePhoneNumberInContact(int id, int phoneId, PhoneNumberRequestDto phoneNumberDto)
         {
-            var contact = await _context.Contacts.Include(c => c.PhoneNumbers).Include(c => c.Address).FirstOrDefaultAsync(c => c.Id == id);
-            if (contact == null)
+            try
             {
-                return NotFound($"Contact with id {id} was not found!");
-            }
-
-            var number = await _context.PhoneNumbers.FirstOrDefaultAsync(c => c.Id == phoneId);
-            if (number == null)
-            {
-                return NotFound($"Phone with id {phoneId} was not found!");
-            }
-
-            if (!contact.PhoneNumbers.Any(p => p.Id == phoneId))
-            {
-                return BadRequest($"Phone number with id {phoneId} does not belong to contact with id {id}.");
-            }
-
-            var phone = contact.PhoneNumbers.FirstOrDefault(c => c.Id == phoneId);
-            phone.Number = phoneNumberDto.Number;
-
-            await _context.SaveChangesAsync();
-
-            var response = DtoMappers.ToDto(phone);
-
-            return Ok(response);
-        }
-
-        private void changeSpecificFields(Contact contact, Contact updatedContact)
-        {
-            contact.Name = updatedContact.Name ?? contact.Name;
-            
-            if (updatedContact.Address != null)
-            {
-                if (contact.Address == null)
+                if (!GenericHelpers.IsValidPhoneNumber(phoneNumberDto.Number))
                 {
-                    contact.Address = new Address();
+                    return BadRequest($"Invalid number {phoneNumberDto.Number}!");
                 }
-                contact.Address.Street = updatedContact.Address.Street ?? contact.Address.Street;
-                contact.Address.City = updatedContact.Address.City ?? contact.Address.City;
-                contact.Address.PostalCode = updatedContact.Address.PostalCode ?? contact.Address.PostalCode;
-            }
 
-            var updatedNumbers = updatedContact.PhoneNumbers.Select(p => p.Number).ToList();
-            var currentNumbers = contact.PhoneNumbers.Select(p => p.Number).ToList();
+                var result = await _contactRepository.UpdatePhoneNumberInContact(id, phoneId, phoneNumberDto);
 
-            if (!updatedNumbers.SequenceEqual(currentNumbers))
-            {
-                contact.PhoneNumbers.Clear();
-                foreach (var phone in updatedContact.PhoneNumbers)
+                if (!result.Success)
                 {
-                    contact.PhoneNumbers.Add(phone);
+                    if (result.Error == $"Contact with id {id} was not found!")
+                    {
+                        return NotFound(result.Error);
+                    }
+                    else if (result.Error == $"Phone with id {phoneId} was not found!")
+                    {
+                        return NotFound(result.Error);
+                    }
+
+                    return BadRequest(result.Error);
                 }
+
+                return Ok(result.Data);
             }
-
-            contact.UpdatedAt = DateTime.Now;
-        }
-
-        private bool IsValidPhoneNumber(string? phoneNumber)
-        {
-            if (string.IsNullOrEmpty(phoneNumber) || phoneNumber.Length > 10)
-                return false;
-
-            return phoneNumber.All(char.IsDigit);
+            catch(Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
+            }
         }
     }
 }
