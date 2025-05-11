@@ -74,7 +74,8 @@ StyleCopReport.xml
 *_h.h
 *.ilk
 *.meta
-*.obj
+WebHomework/bin/
+WebHomework/obj/
 *.iobj
 *.pch
 *.pdb
