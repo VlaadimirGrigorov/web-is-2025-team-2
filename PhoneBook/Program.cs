@@ -37,24 +37,11 @@ using (var scope = app.Services.CreateScope())
         await dbContext.SaveChangesAsync();
     }
 
-    if (dbContext.Addresses.Any())
-    {
-        dbContext.Addresses.RemoveRange(dbContext.Addresses);
-        await dbContext.SaveChangesAsync();
-    }
-
     if (dbContext.Contacts.Any())
     {
         dbContext.Contacts.RemoveRange(dbContext.Contacts);
         await dbContext.SaveChangesAsync();
     }
-
-    var address1 = new Address
-    {
-        Street = "dr Ivan Straski",
-        City = "Sofia",
-        PostalCode = "1000"
-    };
 
     var phoneNumbers1 = new List<PhoneNumber>
         {
@@ -67,15 +54,8 @@ using (var scope = app.Services.CreateScope())
         Name = "Ivan Ivanov",
         CreatedAt = DateTime.Now,
         UpdatedAt = DateTime.Now,
-        Address = address1,
+        Address = "dr Ivan Straski",
         PhoneNumbers = phoneNumbers1
-    };
-
-    var address = new Address
-    {
-        Street = "Somewhere",
-        City = "Varna",
-        PostalCode = "9000"
     };
 
     var phoneNumbers = new List<PhoneNumber>
@@ -89,7 +69,7 @@ using (var scope = app.Services.CreateScope())
         Name = "Dragan Ivanov",
         CreatedAt = DateTime.Now,
         UpdatedAt = DateTime.Now,
-        Address = address,
+        Address = "Varna",
         PhoneNumbers = phoneNumbers
     };
 

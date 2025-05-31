@@ -9,6 +9,5 @@ namespace WebHomework.Data
 
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<PhoneNumber> PhoneNumbers { get; set; }
-        public DbSet<Address> Addresses { get; set; }
     }
 }

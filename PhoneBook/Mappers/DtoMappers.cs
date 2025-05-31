@@ -28,12 +28,7 @@ namespace WebHomework.Mappers
             {
                 Id = contact.Id,
                 Name = contact.Name,
-                Address = contact.Address == null ? null : new AddressDto
-                {
-                    Street = contact.Address.Street,
-                    City = contact.Address.City,
-                    PostalCode = contact.Address.PostalCode
-                },
+                Address = contact.Address,
                 PhoneNumbers = contact.PhoneNumbers
                     .Select(p => new PhoneNumberResponseDto
                     {
@@ -48,12 +43,7 @@ namespace WebHomework.Mappers
             return new Contact
             {
                 Name = dto.Name,
-                Address = dto.Address == null ? null : new Address
-                {
-                    Street = dto.Address.Street,
-                    City = dto.Address.City,
-                    PostalCode = dto.Address.PostalCode
-                },
+                Address = dto.Address,
                 PhoneNumbers = dto.PhoneNumbers
                     .Select(p => new PhoneNumber
                     {

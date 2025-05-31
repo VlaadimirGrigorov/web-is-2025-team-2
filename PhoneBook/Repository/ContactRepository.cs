@@ -161,17 +161,6 @@ namespace WebHomework.Repository
         {
             contact.Name = updatedContact.Name ?? contact.Name;
 
-            if (updatedContact.Address != null)
-            {
-                if (contact.Address == null)
-                {
-                    contact.Address = new Address();
-                }
-                contact.Address.Street = updatedContact.Address.Street ?? contact.Address.Street;
-                contact.Address.City = updatedContact.Address.City ?? contact.Address.City;
-                contact.Address.PostalCode = updatedContact.Address.PostalCode ?? contact.Address.PostalCode;
-            }
-
             var updatedNumbers = updatedContact.PhoneNumbers.Select(p => p.Number).ToList();
             var currentNumbers = contact.PhoneNumbers.Select(p => p.Number).ToList();
 

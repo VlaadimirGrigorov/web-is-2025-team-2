@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebHomework.Data;
 
@@ -11,9 +12,11 @@ using WebHomework.Data;
 namespace WebHomework.Migrations
 {
     [DbContext(typeof(PhoneBookContext))]
-    partial class PhoneBookContextModelSnapshot : ModelSnapshot
+    [Migration("20250531204211_AddedUserAndPhoto")]
+    partial class AddedUserAndPhoto
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,7 +25,7 @@ namespace WebHomework.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
-            modelBuilder.Entity("WebHomework.Models.Contact", b =>
+            modelBuilder.Entity("WebHomework.Models.Address", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -30,8 +33,33 @@ namespace WebHomework.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Address")
+                    b.Property<string>("City")
                         .HasColumnType("longtext");
+
+                    b.Property<int?>("ContactId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PostalCode")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Street")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContactId")
+                        .IsUnique();
+
+                    b.ToTable("Addresses");
+                });
+
+            modelBuilder.Entity("WebHomework.Models.Contact", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
@@ -68,6 +96,15 @@ namespace WebHomework.Migrations
                     b.ToTable("PhoneNumbers");
                 });
 
+            modelBuilder.Entity("WebHomework.Models.Address", b =>
+                {
+                    b.HasOne("WebHomework.Models.Contact", "Contact")
+                        .WithOne("Address")
+                        .HasForeignKey("WebHomework.Models.Address", "ContactId");
+
+                    b.Navigation("Contact");
+                });
+
             modelBuilder.Entity("WebHomework.Models.PhoneNumber", b =>
                 {
                     b.HasOne("WebHomework.Models.Contact", "Contact")
@@ -79,6 +116,8 @@ namespace WebHomework.Migrations
 
             modelBuilder.Entity("WebHomework.Models.Contact", b =>
                 {
+                    b.Navigation("Address");
+
                     b.Navigation("PhoneNumbers");
                 });
 #pragma warning restore 612, 618
