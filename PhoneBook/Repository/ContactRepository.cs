@@ -18,7 +18,7 @@ namespace WebHomework.Repository
 
         public async Task<List<ContactResponseDto>> GetContacts()
         {
-            var contacts = await _context.Contacts.Include(c => c.PhoneNumbers).Include(c => c.Address).ToListAsync();
+            var contacts = await _context.Contacts.Include(c => c.PhoneNumbers).ToListAsync();
 
             return contacts.Select(DtoMappers.ToDto).ToList();
         }
@@ -26,7 +26,6 @@ namespace WebHomework.Repository
         public async Task<ContactResponseDto> GetContact(int id)
         {
             var contact = await _context.Contacts
-                                .Include(c => c.Address)
                                 .Include(c => c.PhoneNumbers)
                                 .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -37,7 +36,7 @@ namespace WebHomework.Repository
         {
             var contact = DtoMappers.ToEntity(contactDto);
 
-            var contactExists = await _context.Contacts.Include(c => c.Address).Include(c => c.PhoneNumbers).FirstOrDefaultAsync(c => c.Id == contact.Id);
+            var contactExists = await _context.Contacts.Include(c => c.PhoneNumbers).FirstOrDefaultAsync(c => c.Id == contact.Id);
             if (contactExists != null)
             {
                 return null;
@@ -51,7 +50,7 @@ namespace WebHomework.Repository
 
         public async Task<RepositoryResult<PhoneNumberResponseDto>> AddPhoneToContact(int id, PhoneNumberRequestDto phoneNumberDto)
         {
-            var contact = await _context.Contacts.Include(c => c.PhoneNumbers).Include(c => c.Address).FirstOrDefaultAsync(c => c.Id == id);
+            var contact = await _context.Contacts.Include(c => c.PhoneNumbers).FirstOrDefaultAsync(c => c.Id == id);
             if (contact == null)
             {
                 return RepositoryResult<PhoneNumberResponseDto>.Fail($"Contact with id {id} was not found!");
@@ -74,7 +73,7 @@ namespace WebHomework.Repository
 
         public async Task<ContactResponseDto> DeleteContact(int id)
         {
-            var contact = await _context.Contacts.Include(c => c.Address).Include(c => c.PhoneNumbers).FirstOrDefaultAsync(c => c.Id == id);
+            var contact = await _context.Contacts.Include(c => c.PhoneNumbers).FirstOrDefaultAsync(c => c.Id == id);
             if (contact == null)
             {
                 return null;
