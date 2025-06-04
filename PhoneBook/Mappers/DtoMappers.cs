@@ -1,7 +1,7 @@
-﻿using WebHomework.DTOs;
-using WebHomework.Models;
+﻿using PhoneBook.DTOs;
+using PhoneBook.Models;
 
-namespace WebHomework.Mappers
+namespace PhoneBook.Mappers
 {
     public static class DtoMappers
     {

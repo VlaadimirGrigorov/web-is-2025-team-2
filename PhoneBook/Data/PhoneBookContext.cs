@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using WebHomework.Models;
+using PhoneBook.Models;
 
-namespace WebHomework.Data
+namespace PhoneBook.Data
 {
     public class PhoneBookContext : DbContext
     {

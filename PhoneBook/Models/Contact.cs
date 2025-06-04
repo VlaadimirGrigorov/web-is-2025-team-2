@@ -1,4 +1,6 @@
-﻿namespace WebHomework.Models
+﻿using PhoneBook.Models;
+
+namespace PhoneBook.Models
 {
     public class Contact
     {
@@ -8,5 +10,8 @@
         public string? Address { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
+
+        public int UserId { get; set; }             // Външен ключ към User
+        public User? User { get; set; }             // Навигационно свойство
     }
 }

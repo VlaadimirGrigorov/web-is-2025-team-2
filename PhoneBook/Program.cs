@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using WebHomework.Data;
-using WebHomework.Models;
-using WebHomework.Repository;
+using PhoneBook.Data;
+using PhoneBook.Models;
+using PhoneBook.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 

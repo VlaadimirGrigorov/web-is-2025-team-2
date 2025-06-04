@@ -1,6 +1,6 @@
-﻿using WebHomework.Models;
+﻿using PhoneBook.Models;
 
-namespace WebHomework.DTOs
+namespace PhoneBook.DTOs
 {
     public class ContactResponseDto
     {

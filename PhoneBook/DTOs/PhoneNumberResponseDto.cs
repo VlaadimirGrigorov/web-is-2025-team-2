@@ -1,4 +1,4 @@
-﻿namespace WebHomework.DTOs
+﻿namespace PhoneBook.DTOs
 {
     public class PhoneNumberResponseDto
     {

@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebHomework.Data;
-using WebHomework.DTOs;
-using WebHomework.Mappers;
-using WebHomework.Models;
+using PhoneBook.Data;
+using PhoneBook.DTOs;
+using PhoneBook.Mappers;
+using PhoneBook.Models;
 
-namespace WebHomework.Repository
+namespace PhoneBook.Repository
 {
     public class ContactRepository : IContactRepository
     {

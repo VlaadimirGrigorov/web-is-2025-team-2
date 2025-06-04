@@ -1,4 +1,4 @@
-﻿namespace WebHomework.Repository
+﻿namespace PhoneBook.Repository
 {
     public class RepositoryResult<T>
     {

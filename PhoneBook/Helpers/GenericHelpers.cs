@@ -1,4 +1,4 @@
-﻿namespace WebHomework.Helpers
+﻿namespace PhoneBook.Helpers
 {
     public static class GenericHelpers
     {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using WebHomework.DTOs;
-using WebHomework.Helpers;
-using WebHomework.Repository;
+using PhoneBook.DTOs;
+using PhoneBook.Helpers;
+using PhoneBook.Repository;
 
 namespace WebHomework.Controllers
 {

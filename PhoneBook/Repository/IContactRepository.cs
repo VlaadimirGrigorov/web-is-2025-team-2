@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using WebHomework.DTOs;
-using WebHomework.Models;
+using PhoneBook.DTOs;
+using PhoneBook.Models;
 
-namespace WebHomework.Repository
+namespace PhoneBook.Repository
 {
     public interface IContactRepository
     {
