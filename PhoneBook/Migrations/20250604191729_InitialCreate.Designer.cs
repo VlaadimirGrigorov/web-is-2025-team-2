@@ -9,11 +9,11 @@ using PhoneBook.Data;
 
 #nullable disable
 
-namespace WebHomework.Migrations
+namespace PhoneBook.Migrations
 {
     [DbContext(typeof(PhoneBookContext))]
-    [Migration("20250413153011_UpdatedModels")]
-    partial class UpdatedModels
+    [Migration("20250604191729_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,7 @@ namespace WebHomework.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
-            modelBuilder.Entity("WebHomework.Models.Address", b =>
+            modelBuilder.Entity("PhoneBook.Models.Contact", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -33,49 +33,29 @@ namespace WebHomework.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("City")
+                    b.Property<string>("Address")
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("ContactId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PostalCode")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Street")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContactId")
-                        .IsUnique();
-
-                    b.ToTable("addresses");
-                });
-
-            modelBuilder.Entity("WebHomework.Models.Contact", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("CreatedAt")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Name")
                         .HasColumnType("longtext");
 
-                    b.Property<DateTime?>("UpdatedAt")
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Contacts");
                 });
 
-            modelBuilder.Entity("WebHomework.Models.PhoneNumber", b =>
+            modelBuilder.Entity("PhoneBook.Models.PhoneNumber", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -96,29 +76,56 @@ namespace WebHomework.Migrations
                     b.ToTable("PhoneNumbers");
                 });
 
-            modelBuilder.Entity("WebHomework.Models.Address", b =>
+            modelBuilder.Entity("PhoneBook.Models.User", b =>
                 {
-                    b.HasOne("WebHomework.Models.Contact", "Contact")
-                        .WithOne("Address")
-                        .HasForeignKey("WebHomework.Models.Address", "ContactId");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
 
-                    b.Navigation("Contact");
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Email")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Username")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("User");
                 });
 
-            modelBuilder.Entity("WebHomework.Models.PhoneNumber", b =>
+            modelBuilder.Entity("PhoneBook.Models.Contact", b =>
                 {
-                    b.HasOne("WebHomework.Models.Contact", "Contact")
+                    b.HasOne("PhoneBook.Models.User", "User")
+                        .WithMany("Contacts")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PhoneBook.Models.PhoneNumber", b =>
+                {
+                    b.HasOne("PhoneBook.Models.Contact", "Contact")
                         .WithMany("PhoneNumbers")
                         .HasForeignKey("ContactId");
 
                     b.Navigation("Contact");
                 });
 
-            modelBuilder.Entity("WebHomework.Models.Contact", b =>
+            modelBuilder.Entity("PhoneBook.Models.Contact", b =>
                 {
-                    b.Navigation("Address");
-
                     b.Navigation("PhoneNumbers");
+                });
+
+            modelBuilder.Entity("PhoneBook.Models.User", b =>
+                {
+                    b.Navigation("Contacts");
                 });
 #pragma warning restore 612, 618
         }
