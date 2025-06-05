@@ -6,6 +6,7 @@ using PhoneBook.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.Extensions.FileProviders; // Added for PhysicalFileProvider
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -144,6 +145,20 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowReactApp");
+
+// Configure default files
+var defaultFilesOptions = new DefaultFilesOptions();
+defaultFilesOptions.DefaultFileNames.Clear();
+defaultFilesOptions.DefaultFileNames.Add("login-page/index.html");
+app.UseDefaultFiles(defaultFilesOptions);
+
+// Configure static files to serve from the "frontend" directory
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "frontend")),
+    RequestPath = "" // Serve files from the root of the domain
+});
 
 app.UseHttpsRedirection();
 

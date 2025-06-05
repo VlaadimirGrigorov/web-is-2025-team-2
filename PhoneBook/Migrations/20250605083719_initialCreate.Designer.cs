@@ -12,8 +12,8 @@ using PhoneBook.Data;
 namespace PhoneBook.Migrations
 {
     [DbContext(typeof(PhoneBookContext))]
-    [Migration("20250604191729_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250605083719_initialCreate")]
+    partial class initialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -40,6 +40,7 @@ namespace PhoneBook.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -67,6 +68,7 @@ namespace PhoneBook.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Number")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
@@ -74,6 +76,29 @@ namespace PhoneBook.Migrations
                     b.HasIndex("ContactId");
 
                     b.ToTable("PhoneNumbers");
+                });
+
+            modelBuilder.Entity("PhoneBook.Models.Photo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ContactId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContactId")
+                        .IsUnique();
+
+                    b.ToTable("Photos");
                 });
 
             modelBuilder.Entity("PhoneBook.Models.User", b =>
@@ -85,17 +110,20 @@ namespace PhoneBook.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Email")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("PasswordHash")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("Username")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
-                    b.ToTable("User");
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("PhoneBook.Models.Contact", b =>
@@ -118,9 +146,20 @@ namespace PhoneBook.Migrations
                     b.Navigation("Contact");
                 });
 
+            modelBuilder.Entity("PhoneBook.Models.Photo", b =>
+                {
+                    b.HasOne("PhoneBook.Models.Contact", "Contact")
+                        .WithOne("photo")
+                        .HasForeignKey("PhoneBook.Models.Photo", "ContactId");
+
+                    b.Navigation("Contact");
+                });
+
             modelBuilder.Entity("PhoneBook.Models.Contact", b =>
                 {
                     b.Navigation("PhoneNumbers");
+
+                    b.Navigation("photo");
                 });
 
             modelBuilder.Entity("PhoneBook.Models.User", b =>
