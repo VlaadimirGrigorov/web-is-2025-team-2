@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+const API_BASE_URL = "https://localhost:7192/api";
+
 async function handleSubmit(event) {
     if (event) {
         event.preventDefault();
@@ -54,7 +56,7 @@ async function handleSubmit(event) {
     }
 
     try {
-        const response = await fetch('/api/auth/login', {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

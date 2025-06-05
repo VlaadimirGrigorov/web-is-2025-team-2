@@ -1,67 +1,61 @@
-const userDatabase = [
-    {
-        username: "admin",
-        email: "admin",
-        phone: "123456",
-        password: "admin1"
-    },
-    {
-        username: "antonio",
-        email: "antonio",
-        phone: "654321",
-        password: "antonio"
-    }
-];
+const API_BASE_URL = "https://localhost:7192/api";
 
-function checkLoggedIn() {
-    const loggedInUser = localStorage.getItem('loggedInUser');
-    if (loggedInUser) {
-        window.location.href = "../index.html";
-    }
-}
-
-checkLoggedIn();
-
-function handleSubmit(event) {
+async function handleSubmit(event) {
     event.preventDefault();
-    
+
     const username = document.getElementById('username').value;
     const email = document.getElementById('email').value;
-    const phone = document.getElementById('phone').value;
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
     const messageDiv = document.getElementById('message');
-    
-    //if (userDatabase.some(u => u.email === email)) {
-    //    registerError.textContent = "Този имейл вече е регистриран.";
-    //    return false;
-    //}
-    
-    //if (userDatabase.some(u => u.phone === phone)) {
-    //    registerError.textContent = "Този телефонен номер вече е регистриран.";
-    //    return false;
-    //}
-    
-    if (password.length < 6) {
-        messageDiv.className = 'error';
-        messageDiv.textContent = 'Паролата трябва да е поне 6 символа!';
-        return false;
-    }
-    
+
+    messageDiv.textContent = ''; // Clear previous messages
+    messageDiv.className = '';
+
     if (password !== confirmPassword) {
         messageDiv.className = 'error';
         messageDiv.textContent = 'Паролите не съвпадат!';
-        return false;
+        return;
     }
+        
+    const userData = {
+        Username: username,
+        Email: email,
+        Password: password
+    };
 
-    messageDiv.className = 'success';
-    messageDiv.textContent = 'Успешна регистрация! Пренасочване към входа...';
-    
-    userDatabase.push( { username, email, phone, password });
-    
-    setTimeout(() => {
-        window.location.href = "../login-page/index.html";
-    }, 1500);
-    
-    return false;
+    try {
+        const response = await fetch(`${API_BASE_URL}/users/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData)
+        });
+
+        if (response.status === 201) {
+            messageDiv.className = 'success';
+            messageDiv.textContent = 'Успешна регистрация! Пренасочване към страницата за вход...';
+            setTimeout(() => {
+                window.location.href = "../login-page/index.html";
+            }, 2000);
+        } else {
+            const errorData = await response.json().catch(() => null); // Try to parse JSON, otherwise null
+            messageDiv.className = 'error';
+            if (errorData && errorData.message) {
+                messageDiv.textContent = errorData.message;
+            } else if (response.status === 409) {
+                messageDiv.textContent = 'Потребител с този имейл вече съществува.';
+            } else if (response.status === 400) {
+                messageDiv.textContent = 'Невалидни данни. Моля, проверете въведената информация.';
+            }
+            else {
+                messageDiv.textContent = `Грешка при регистрация: ${response.status} ${response.statusText}`;
+            }
+        }
+    } catch (error) {
+        messageDiv.className = 'error';
+        messageDiv.textContent = 'Възникна грешка при свързване със сървъра. Моля, опитайте отново по-късно.';
+        console.error('Registration error:', error);
+    }
 }
