@@ -76,7 +76,7 @@ async function handleSubmit(event) {
                     messageDiv.textContent = 'Успешен вход! Пренасочване...';
                 }
                 // Redirect to the main application page (explicitly to index.html)
-                window.location.href = '/index.html';
+                window.location.href = '/home-page/index.html';
             } else {
                 const msg = 'Грешка: Токен не е получен от сървъра.';
                 if (messageDiv) {

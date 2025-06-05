@@ -62,15 +62,6 @@ namespace WebHomework.Controllers
             {
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-                // check the phone numbers
-                foreach (var phoneNumber in contactDto.PhoneNumbers)
-                {
-                    if (!GenericHelpers.IsValidPhoneNumber(phoneNumber.Number))
-                    {
-                        return BadRequest("Invalid phone number!");
-                    }
-                }
-
                 var result = await _contactRepository.AddContact(userId, contactDto);
                 if (result == null)
                 {
@@ -91,11 +82,6 @@ namespace WebHomework.Controllers
             try
             {
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-
-                if (!GenericHelpers.IsValidPhoneNumber(phoneNumberDto.Number))
-                {
-                    return BadRequest($"Invalid phone number!");
-                }
 
                 var result = await _contactRepository.AddPhoneToContact(userId, id, phoneNumberDto);
                 if (!result.Success)
@@ -200,11 +186,6 @@ namespace WebHomework.Controllers
         {
             try
             {
-                if (!GenericHelpers.IsValidPhoneNumber(phoneNumberDto.Number))
-                {
-                    return BadRequest($"Invalid number {phoneNumberDto.Number}!");
-                }
-
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
                 var result = await _contactRepository.UpdatePhoneNumberInContact(userId, id, phoneId, phoneNumberDto);

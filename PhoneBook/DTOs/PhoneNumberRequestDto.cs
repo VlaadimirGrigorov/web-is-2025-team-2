@@ -1,7 +1,10 @@
-﻿namespace PhoneBook.DTOs
+﻿using PhoneBook.Validators; // така зареждаш PhoneNumberAttribute
+
+namespace PhoneBook.DTOs
 {
     public class PhoneNumberRequestDto
     {
-        public string? Number { get; set; }
+        [PhoneNumber]
+        public string Number { get; set; }
     }
 }
