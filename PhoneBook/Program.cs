@@ -1,9 +1,41 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PhoneBook.Data;
 using PhoneBook.Models;
 using PhoneBook.Repository;
+using PhoneBook.Helpers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// --- Добавяме конфигурацията за JWT ---
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+builder.Services.Configure<JwtSettings>(jwtSettings);
+
+var key = Encoding.UTF8.GetBytes(jwtSettings["SecurityKey"]);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false; // for production - true
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(key)
+    };
+});
 
 builder.Services.AddDbContext<PhoneBookContext>(options =>
     options.UseMySql(
@@ -47,11 +79,28 @@ using (var scope = app.Services.CreateScope())
         await dbContext.SaveChangesAsync();
     }
 
+    if (dbContext.Users.Any())
+    {
+        dbContext.Users.RemoveRange(dbContext.Users);
+        await dbContext.SaveChangesAsync();
+    }
+
+    // 1. Създай потребител
+    var user = new User
+    {
+        Username = "admin",
+        PasswordHash = "somehash", // В продукция използвай истински хеш!
+        Email = "admin@example.com"
+    };
+    dbContext.Users.Add(user);
+    await dbContext.SaveChangesAsync();
+
+    // 2. Използвай user.Id за контактите
     var phoneNumbers1 = new List<PhoneNumber>
-        {
-            new PhoneNumber { Number = "0888123456" },
-            new PhoneNumber { Number = "0899123456" }
-        };
+    {
+        new PhoneNumber { Number = "0888123456" },
+        new PhoneNumber { Number = "0899123456" }
+    };
 
     var contact = new Contact
     {
@@ -60,9 +109,9 @@ using (var scope = app.Services.CreateScope())
         UpdatedAt = DateTime.Now,
         Address = "dr Ivan Straski",
         PhoneNumbers = phoneNumbers1,
-        UserId = 0, // Set to a valid UserId if you have users
+        UserId = 0, // използвай валидно Id
         photo = null,
-        User = null
+        User = user
     };
 
     var phoneNumbers = new List<PhoneNumber>
@@ -78,9 +127,9 @@ using (var scope = app.Services.CreateScope())
         UpdatedAt = DateTime.Now,
         Address = "Varna",
         PhoneNumbers = phoneNumbers,
-        UserId = 0, // Set to a valid UserId if you have users
+        UserId = 0,
         photo = null,
-        User = null
+        User = user
     };
 
     dbContext.Contacts.AddRange(contact, contact2);
@@ -97,6 +146,10 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowReactApp");
 
 app.UseHttpsRedirection();
+
+// Activating authentication & authorization middleware
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 app.Run();
