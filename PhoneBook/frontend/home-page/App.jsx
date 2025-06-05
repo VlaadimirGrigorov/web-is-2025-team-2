@@ -380,4 +380,10 @@ const styles = `
 
 // The style injection logic has been moved into a useEffect hook within the App component.
 
+//TODO add btn for logout
+function logout() {
+    localStorage.removeItem('loggedInUser');
+    window.location.href = "../login-page/index.html";
+}
+
 export default App;
