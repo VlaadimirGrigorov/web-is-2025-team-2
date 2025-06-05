@@ -49,11 +49,11 @@ function App() {
             }
 
             const transformedContacts = data.map(contact => ({
-                id: contact.Id,
-                name: contact.Name,
-                address: contact.Address,
-                email: contact.Email, // Added email mapping
-                phoneNumbers: contact.PhoneNumbers ? contact.PhoneNumbers.map(pn => pn.Number) : [],
+                id: contact.id,
+                name: contact.name,
+                address: contact.address,
+                email: contact.email,
+                phoneNumbers: contact.phoneNumbers ? contact.phoneNumbers.map(pn => pn.number) : [],
             }));
             setContacts(transformedContacts);
         } catch (error) {
@@ -73,6 +73,20 @@ function App() {
             fetchContacts();
         }
     }, []); // Check auth token and initial fetch on component mount
+
+    useEffect(() => {
+        // Inject styles (for demonstration if not using Tailwind or separate CSS file)
+        // In a real app, put this in index.css and import it.
+        const styleSheet = document.createElement("style");
+        styleSheet.type = "text/css";
+        styleSheet.innerText = styles; // 'styles' is defined globally below
+        document.head.appendChild(styleSheet);
+
+        // Optional: Return a cleanup function to remove the stylesheet when the component unmounts
+        return () => {
+            document.head.removeChild(styleSheet);
+        };
+    }, []); // Empty dependency array ensures this runs only once on mount
 
     const handleInputChange = (e) => {
         setNewContact({ ...newContact, [e.target.name]: e.target.value });
@@ -264,16 +278,16 @@ function App() {
                     {contacts.map((contact, index) => (
                         <li key={contact.id} className="bg-white p-5 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
                             <div className="flex items-start space-x-4">
-                                {/* <img src={contact.imageUrl} alt={contact.name} className="w-20 h-20 rounded-full border-2 border-blue-300 object-cover shadow" onError={(e) => { e.target.src = 'https://via.placeholder.com/150'; }}/> */}
+                                {/* <img src={contact.imageUrl} alt={contact.name} className="w-20 h-20 rounded-full border-2 border-blue-300 object-cover shadow" onError={(e) => { e.target.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; e.target.alt = 'Image load error'; }}/> */}
                                 <div className="flex-grow">
                                     <h3 className="text-xl font-semibold text-blue-700">{contact.name}</h3>
-                                    {/* {contact.email && <p className="text-gray-600">{contact.email}</p>} */}
+                                    {contact.email && <p className="text-gray-600">{contact.email}</p>}
                                     {contact.address && <p className="text-gray-500 text-sm">{contact.address}</p>}
                                     {contact.phoneNumbers && contact.phoneNumbers.length > 0 && (
                                         <div className="mt-2">
                                             <h4 className="font-medium text-xs text-gray-500">Phones:</h4>
                                             <ul className="list-disc list-inside ml-1">
-                                                {contact.phoneNumbers.map((phone, phoneIdx) => <li key={phoneIdx} className="text-gray-600 text-sm">{phone}</li>)}
+                                                {contact.phoneNumbers.map((phone, phoneIdx) => <li key={phone + phoneIdx} className="text-gray-600 text-sm">{phone}</li>)}
                                             </ul>
                                         </div>
                                     )}
@@ -364,12 +378,6 @@ const styles = `
 /* This is a very minimal stand-in for some button/input styles */
 `;
 
-// Inject styles (for demonstration if not using Tailwind or separate CSS file)
-// In a real app, put this in index.css and import it.
-const styleSheet = document.createElement("style");
-styleSheet.type = "text/css";
-styleSheet.innerText = styles;
-document.head.appendChild(styleSheet);
-
+// The style injection logic has been moved into a useEffect hook within the App component.
 
 export default App;

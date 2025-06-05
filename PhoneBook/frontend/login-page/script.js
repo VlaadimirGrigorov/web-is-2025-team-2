@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("Authenticatio token deleted");
     localStorage.removeItem('authToken'); // Clear token on login page load
 
     // const loginForm = document.getElementById('loginForm'); // Assuming a form with ID 'loginForm'
