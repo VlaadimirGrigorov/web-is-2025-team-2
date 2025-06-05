@@ -68,35 +68,28 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<PhoneBookContext>();
     await dbContext.Database.MigrateAsync();
 
-    if (dbContext.PhoneNumbers.Any())
-    {
-        dbContext.PhoneNumbers.RemoveRange(dbContext.PhoneNumbers);
-        await dbContext.SaveChangesAsync();
-    }
+    // 1) Изтриваме всички редове (DELETE) от таблиците в правилния ред:
+    //    - Най-напред дъщерните таблици (PhoneNumbers), после parent (Contacts), накрая Users.
+    await dbContext.Database.ExecuteSqlRawAsync("DELETE FROM `PhoneNumbers`;");
+    await dbContext.Database.ExecuteSqlRawAsync("DELETE FROM `Contacts`;");
+    await dbContext.Database.ExecuteSqlRawAsync("DELETE FROM `Users`;");
 
-    if (dbContext.Contacts.Any())
-    {
-        dbContext.Contacts.RemoveRange(dbContext.Contacts);
-        await dbContext.SaveChangesAsync();
-    }
+    // 2) Рестартираме автоинкремент брояча за всяка таблица:
+    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `PhoneNumbers` AUTO_INCREMENT = 1;");
+    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Contacts` AUTO_INCREMENT = 1;");
+    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Users` AUTO_INCREMENT = 1;");
 
-    if (dbContext.Users.Any())
-    {
-        dbContext.Users.RemoveRange(dbContext.Users);
-        await dbContext.SaveChangesAsync();
-    }
-
-    // 1. Създай потребител
+    // 3) Създаваме потребител
     var user = new User
     {
         Username = "admin",
-        PasswordHash = "somehash", // В продукция използвай истински хеш!
+        PasswordHash = "somehash",
         Email = "admin@example.com"
     };
     dbContext.Users.Add(user);
     await dbContext.SaveChangesAsync();
 
-    // 2. Използвай user.Id за контактите
+    // 4) Създаваме контактите, използвайки новото user.Id (който е 1)
     var phoneNumbers1 = new List<PhoneNumber>
     {
         new PhoneNumber { Number = "0888123456" },
@@ -110,12 +103,12 @@ using (var scope = app.Services.CreateScope())
         UpdatedAt = DateTime.Now,
         Address = "dr Ivan Straski",
         PhoneNumbers = phoneNumbers1,
-        UserId = 0, // използвай валидно Id
-        photo = null,
+        UserId = user.Id,
+        Photo = null,
         User = user
     };
 
-    var phoneNumbers = new List<PhoneNumber>
+    var phoneNumbers2 = new List<PhoneNumber>
     {
         new PhoneNumber { Number = "0888000000" },
         new PhoneNumber { Number = "0888999999" }
@@ -127,9 +120,9 @@ using (var scope = app.Services.CreateScope())
         CreatedAt = DateTime.Now,
         UpdatedAt = DateTime.Now,
         Address = "Varna",
-        PhoneNumbers = phoneNumbers,
-        UserId = 0,
-        photo = null,
+        PhoneNumbers = phoneNumbers2,
+        UserId = user.Id,
+        Photo = null,
         User = user
     };
 

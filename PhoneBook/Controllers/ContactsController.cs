@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PhoneBook.DTOs;
 using PhoneBook.Helpers;
 using PhoneBook.Repository;
+using System.Security.Claims;
 
 namespace WebHomework.Controllers
 {
     [Route("api/contacts")]
     [ApiController]
+    [Authorize]
     public class ContactsController : ControllerBase
     {
         private readonly IContactRepository _contactRepository;
@@ -21,7 +24,9 @@ namespace WebHomework.Controllers
         {
             try
             {
-                return Ok(await _contactRepository.GetContacts());
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+                return Ok(await _contactRepository.GetContacts(userId));
             }
             catch(Exception)
             {
@@ -34,7 +39,8 @@ namespace WebHomework.Controllers
         {
             try
             {
-                var contact = await _contactRepository.GetContact(id);
+                int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var contact = await _contactRepository.GetContact(userId, id);
 
                 if (contact == null)
                 {
@@ -54,6 +60,8 @@ namespace WebHomework.Controllers
         {
             try
             {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
                 // check the phone numbers
                 foreach (var phoneNumber in contactDto.PhoneNumbers)
                 {
@@ -63,7 +71,7 @@ namespace WebHomework.Controllers
                     }
                 }
 
-                var result = await _contactRepository.AddContact(contactDto);
+                var result = await _contactRepository.AddContact(userId, contactDto);
                 if (result == null)
                 {
                     return Conflict("Contact already exists!");
@@ -82,12 +90,14 @@ namespace WebHomework.Controllers
         {
             try
             {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
                 if (!GenericHelpers.IsValidPhoneNumber(phoneNumberDto.Number))
                 {
                     return BadRequest($"Invalid phone number!");
                 }
 
-                var result = await _contactRepository.AddPhoneToContact(id, phoneNumberDto);
+                var result = await _contactRepository.AddPhoneToContact(userId, id, phoneNumberDto);
                 if (!result.Success)
                 {
                     if (result.Error == $"Contact with id {id} was not found!")
@@ -115,7 +125,10 @@ namespace WebHomework.Controllers
         {
             try
             {
-                var contact = await _contactRepository.DeleteContact(id);
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+                var contact = await _contactRepository.DeleteContact(userId, id);
+                
                 if (contact == null)
                 {
                     return NotFound($"Contact with id {id} doesn't exist!");
@@ -134,7 +147,9 @@ namespace WebHomework.Controllers
         {
             try
             {
-                var result = await _contactRepository.DeletePhoneNumberFromContact(id, phoneId);
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+                var result = await _contactRepository.DeletePhoneNumberFromContact(userId, id, phoneId);
 
                 if (!result.Success)
                 {
@@ -163,7 +178,9 @@ namespace WebHomework.Controllers
         {
             try
             {
-                var contact = await _contactRepository.UpdateContact(id, updatedContactDto);
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+                var contact = await _contactRepository.UpdateContact(userId, id, updatedContactDto);
 
                 if (contact == null)
                 {
@@ -188,7 +205,9 @@ namespace WebHomework.Controllers
                     return BadRequest($"Invalid number {phoneNumberDto.Number}!");
                 }
 
-                var result = await _contactRepository.UpdatePhoneNumberInContact(id, phoneId, phoneNumberDto);
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+                var result = await _contactRepository.UpdatePhoneNumberInContact(userId, id, phoneId, phoneNumberDto);
 
                 if (!result.Success)
                 {
@@ -206,7 +225,7 @@ namespace WebHomework.Controllers
 
                 return Ok(result.Data);
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
             }
