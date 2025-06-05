@@ -16,7 +16,7 @@ const userDatabase = [
 function checkLoggedIn() {
     const loggedInUser = localStorage.getItem('loggedInUser');
     if (loggedInUser) {
-        window.location.href = "../welcome-page/index.html";
+        window.location.href = "../index.html";
     }
 }
 
@@ -39,7 +39,7 @@ function handleSubmit(event) {
         localStorage.setItem('loggedInUser', username);
         
         setTimeout(() => {
-            window.location.href = "../welcome-page/index.html";
+            window.location.href = "../index.html";
         }, 1500);
     } else {
 

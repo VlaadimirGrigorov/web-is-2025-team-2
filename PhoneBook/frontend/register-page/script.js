@@ -16,7 +16,7 @@ const userDatabase = [
 function checkLoggedIn() {
     const loggedInUser = localStorage.getItem('loggedInUser');
     if (loggedInUser) {
-        window.location.href = "../welcome-page/index.html";
+        window.location.href = "../index.html";
     }
 }
 
@@ -32,15 +32,15 @@ function handleSubmit(event) {
     const confirmPassword = document.getElementById('confirmPassword').value;
     const messageDiv = document.getElementById('message');
     
-    if (userDatabase.some(u => u.email === email)) {
-        registerError.textContent = "Този имейл вече е регистриран.";
-        return false;
-    }
+    //if (userDatabase.some(u => u.email === email)) {
+    //    registerError.textContent = "Този имейл вече е регистриран.";
+    //    return false;
+    //}
     
-    if (userDatabase.some(u => u.phone === phone)) {
-        registerError.textContent = "Този телефонен номер вече е регистриран.";
-        return false;
-    }
+    //if (userDatabase.some(u => u.phone === phone)) {
+    //    registerError.textContent = "Този телефонен номер вече е регистриран.";
+    //    return false;
+    //}
     
     if (password.length < 6) {
         messageDiv.className = 'error';

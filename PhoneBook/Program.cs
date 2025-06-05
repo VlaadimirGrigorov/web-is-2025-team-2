@@ -59,7 +59,10 @@ using (var scope = app.Services.CreateScope())
         CreatedAt = DateTime.Now,
         UpdatedAt = DateTime.Now,
         Address = "dr Ivan Straski",
-        PhoneNumbers = phoneNumbers1
+        PhoneNumbers = phoneNumbers1,
+        UserId = 0, // Set to a valid UserId if you have users
+        photo = null,
+        User = null
     };
 
     var phoneNumbers = new List<PhoneNumber>
@@ -74,7 +77,10 @@ using (var scope = app.Services.CreateScope())
         CreatedAt = DateTime.Now,
         UpdatedAt = DateTime.Now,
         Address = "Varna",
-        PhoneNumbers = phoneNumbers
+        PhoneNumbers = phoneNumbers,
+        UserId = 0, // Set to a valid UserId if you have users
+        photo = null,
+        User = null
     };
 
     dbContext.Contacts.AddRange(contact, contact2);

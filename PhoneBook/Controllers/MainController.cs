@@ -1,9 +1,12 @@
 ﻿using FileServ.Controllers.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
+
 namespace FileServ.Controllers
 {
+    [Authorize]
     [Route("api/contact_photos")]
     [ApiController]
     public class MainController : ControllerBase
