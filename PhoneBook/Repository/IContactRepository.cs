@@ -6,13 +6,13 @@ namespace PhoneBook.Repository
 {
     public interface IContactRepository
     {
-        Task<List<ContactResponseDto>> GetContacts();
-        Task<ContactResponseDto?> GetContact(int id);
-        Task<ContactResponseDto> AddContact(ContactRequestDto contactDto);
-        Task<ContactResponseDto> DeleteContact(int id);
-        Task<ContactResponseDto> UpdateContact(int id, ContactRequestDto updatedContactDto);
-        Task<RepositoryResult<PhoneNumberResponseDto>> AddPhoneToContact(int contactId, PhoneNumberRequestDto dto);
-        Task<RepositoryResult<PhoneNumberResponseDto>> UpdatePhoneNumberInContact(int id, int phoneId, PhoneNumberRequestDto phoneNumberDto);
-        Task<RepositoryResult<PhoneNumberResponseDto>> DeletePhoneNumberFromContact(int id, int phoneId);
+        Task<List<ContactResponseDto>> GetContacts(int userId);
+        Task<ContactResponseDto?> GetContact(int userId, int id);
+        Task<ContactResponseDto> AddContact(int userId, ContactRequestDto contactDto);
+        Task<ContactResponseDto> DeleteContact(int userId, int id);
+        Task<ContactResponseDto> UpdateContact(int userId, int id, ContactRequestDto updatedContactDto);
+        Task<RepositoryResult<PhoneNumberResponseDto>> AddPhoneToContact(int userId, int contactId, PhoneNumberRequestDto dto);
+        Task<RepositoryResult<PhoneNumberResponseDto>> UpdatePhoneNumberInContact(int userId, int id, int phoneId, PhoneNumberRequestDto phoneNumberDto);
+        Task<RepositoryResult<PhoneNumberResponseDto>> DeletePhoneNumberFromContact(int userId, int id, int phoneId);
     }
 }

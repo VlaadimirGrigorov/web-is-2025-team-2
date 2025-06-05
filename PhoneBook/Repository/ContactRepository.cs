@@ -15,29 +15,37 @@ namespace PhoneBook.Repository
         {
             _context = dbContext;
         }
-
-        public async Task<List<ContactResponseDto>> GetContacts()
+        public async Task<List<ContactResponseDto>> GetContacts(int userId)
         {
-            var contacts = await _context.Contacts.Include(c => c.PhoneNumbers).ToListAsync();
+            var contacts = await _context.Contacts.
+                                Where(c => c.UserId == userId).
+                                Include(c => c.PhoneNumbers).
+                                ToListAsync();
 
             return contacts.Select(DtoMappers.ToDto).ToList();
         }
-
-        public async Task<ContactResponseDto> GetContact(int id)
+        public async Task<ContactResponseDto> GetContact(int userId, int contactId)
         {
             var contact = await _context.Contacts
+                                .Where(c => c.UserId == userId && c.Id == contactId)
                                 .Include(c => c.PhoneNumbers)
-                                .FirstOrDefaultAsync(c => c.Id == id);
+                                .FirstOrDefaultAsync();
 
             return contact == null ? null : DtoMappers.ToDto(contact);
         }
-
-        public async Task<ContactResponseDto> AddContact(ContactRequestDto contactDto)
+        public async Task<ContactResponseDto> AddContact(int userId, ContactRequestDto contactDto)
         {
             var contact = DtoMappers.ToEntity(contactDto);
+            contact.UserId = userId;
 
-            var contactExists = await _context.Contacts.Include(c => c.PhoneNumbers).FirstOrDefaultAsync(c => c.Id == contact.Id);
-            if (contactExists != null)
+            // Check if a contact with the same name and userId, or same contactId and userId already exists
+            var existingContact = await _context.Contacts
+                                                .AnyAsync(c => c.UserId == userId && c.Name == contact.Name);
+            var contactExists = await _context.Contacts
+                                              .Where(c => c.UserId == userId && c.Id == contact.Id)
+                                              .Include(c => c.PhoneNumbers)
+                                              .FirstOrDefaultAsync();
+            if (existingContact == false || contactExists != null)
             {
                 return null;
             }
@@ -48,9 +56,12 @@ namespace PhoneBook.Repository
             return DtoMappers.ToDto(contact);
         }
 
-        public async Task<RepositoryResult<PhoneNumberResponseDto>> AddPhoneToContact(int id, PhoneNumberRequestDto phoneNumberDto)
+        public async Task<RepositoryResult<PhoneNumberResponseDto>> AddPhoneToContact(int userId, int id, PhoneNumberRequestDto phoneNumberDto)
         {
-            var contact = await _context.Contacts.Include(c => c.PhoneNumbers).FirstOrDefaultAsync(c => c.Id == id);
+            var contact = await _context.Contacts
+                                        .Where(c => c.UserId == userId && c.Id == id)
+                                        .Include(c => c.PhoneNumbers)
+                                        .FirstOrDefaultAsync();
             if (contact == null)
             {
                 return RepositoryResult<PhoneNumberResponseDto>.Fail($"Contact with id {id} was not found!");
@@ -71,9 +82,12 @@ namespace PhoneBook.Repository
             return RepositoryResult<PhoneNumberResponseDto>.Ok(DtoMappers.ToDto(phoneNumber));
         }
 
-        public async Task<ContactResponseDto> DeleteContact(int id)
+        public async Task<ContactResponseDto> DeleteContact(int userId, int id)
         {
-            var contact = await _context.Contacts.Include(c => c.PhoneNumbers).FirstOrDefaultAsync(c => c.Id == id);
+            var contact = await _context.Contacts.
+                                        Where(c => c.UserId == userId && c.Id == id).
+                                        Include(c => c.PhoneNumbers).
+                                        FirstOrDefaultAsync();
             if (contact == null)
             {
                 return null;
@@ -85,9 +99,12 @@ namespace PhoneBook.Repository
             return DtoMappers.ToDto(contact);
         }
 
-        public async Task<RepositoryResult<PhoneNumberResponseDto>> DeletePhoneNumberFromContact(int id, int phoneId)
+        public async Task<RepositoryResult<PhoneNumberResponseDto>> DeletePhoneNumberFromContact(int userId, int id, int phoneId)
         {
-            var contact = await _context.Contacts.Include(c => c.PhoneNumbers).Include(c => c.Address).FirstOrDefaultAsync(c => c.Id == id);
+            var contact = await _context.Contacts
+                                                .Where(c => c.UserId == userId && c.Id == id)
+                                                .Include(c => c.PhoneNumbers)
+                                                .FirstOrDefaultAsync();
             if (contact == null)
             {
                 return RepositoryResult<PhoneNumberResponseDto>.Fail($"Contact with id {id} was not found!");
@@ -111,10 +128,12 @@ namespace PhoneBook.Repository
             return RepositoryResult<PhoneNumberResponseDto>.Ok(DtoMappers.ToDto(phoneNumber));
         }
 
-        public async Task<ContactResponseDto> UpdateContact([FromRoute] int id, [FromBody] ContactRequestDto updatedContactDto)
+        public async Task<ContactResponseDto> UpdateContact(int userId, int id, ContactRequestDto updatedContactDto)
         {
-            var contact = await _context.Contacts.Include(c => c.PhoneNumbers).Include(c => c.Address).FirstOrDefaultAsync(c => c.Id == id);
-
+            var contact = await _context.Contacts
+                                        .Where(c => c.UserId == userId && c.Id == id)
+                                        .Include(c => c.PhoneNumbers)
+                                        .FirstOrDefaultAsync();
             if (contact == null)
             {
                 return null;
@@ -124,14 +143,18 @@ namespace PhoneBook.Repository
 
             changeSpecificFields(contact, updatedContact);
 
+            contact.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return DtoMappers.ToDto(contact);
         }
 
-        public async Task<RepositoryResult<PhoneNumberResponseDto>> UpdatePhoneNumberInContact(int id, int phoneId, PhoneNumberRequestDto phoneNumberDto)
+        public async Task<RepositoryResult<PhoneNumberResponseDto>> UpdatePhoneNumberInContact(int userId, int id, int phoneId, PhoneNumberRequestDto phoneNumberDto)
         {
-            var contact = await _context.Contacts.Include(c => c.PhoneNumbers).Include(c => c.Address).FirstOrDefaultAsync(c => c.Id == id);
+            var contact = await _context.Contacts
+                                        .Where(c => c.UserId == userId && c.Id == id)
+                                        .Include(c => c.PhoneNumbers)
+                                        .FirstOrDefaultAsync();
             if (contact == null)
             {
                 return RepositoryResult<PhoneNumberResponseDto>.Fail($"Contact with id {id} was not found!");
@@ -172,7 +195,7 @@ namespace PhoneBook.Repository
                 }
             }
 
-            contact.UpdatedAt = DateTime.Now;
+            contact.Address = updatedContact.Address ?? contact.Address;
         }
     }
 }

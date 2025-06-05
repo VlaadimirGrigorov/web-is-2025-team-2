@@ -10,7 +10,7 @@ namespace PhoneBook.Models
         public string? Address { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
-        public Photo? photo { get; set; } // Потребителят може да има снимка
+        public Photo? Photo { get; set; } // Потребителят може да има снимка
         public int UserId { get; set; } // Външен ключ към User
         public User? User { get; set; } // Навигационно свойство
     }
