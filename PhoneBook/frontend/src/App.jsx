@@ -109,7 +109,7 @@ function App() {
 
         const payload = {
             Name: newContact.name,
-            Email: newContact.email, // Ensure backend ContactRequestDto has Email
+            //Email: newContact.email, // Ensure backend ContactRequestDto has Email
             Address: newContact.address,
             PhoneNumbers: newContact.phoneNumbers.map(numStr => ({ number: numStr })).filter(pn => pn.number && pn.number.trim() !== ""),
             // Photo/imageUrl is not sent here; backend uses PhotoUrl from a separate upload mechanism.
@@ -243,9 +243,9 @@ function App() {
                         {/* Input fields */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <input type="text" name="name" placeholder="Name (Required)" value={newContact.name} onChange={handleInputChange} required className="input-style" />
-                            <input type="email" name="email" placeholder="Email" value={newContact.email} onChange={handleInputChange} className="input-style" />
+                            {/*<input type="email" name="email" placeholder="Email" value={newContact.email} onChange={handleInputChange} className="input-style" />*/}
                             <input type="text" name="address" placeholder="Address" value={newContact.address} onChange={handleInputChange} className="input-style" />
-                            <input type="text" name="imageUrl" placeholder="Image URL (for display)" value={newContact.imageUrl} onChange={handleInputChange} className="input-style" aria-describedby="imageUrlHelp" />
+                            {/*<input type="text" name="imageUrl" placeholder="Image URL (for display)" value={newContact.imageUrl} onChange={handleInputChange} className="input-style" aria-describedby="imageUrlHelp" />*/}
                         </div>
                         <p id="imageUrlHelp" className="text-xs text-gray-500 mb-4 -mt-3">Note: For displaying an image from a URL. Actual image uploads need a different setup.</p>
 
