@@ -39,13 +39,13 @@ namespace PhoneBook.Repository
             contact.UserId = userId;
 
             // Check if a contact with the same name and userId, or same contactId and userId already exists
-            var existingContact = await _context.Contacts
-                                                .AnyAsync(c => c.UserId == userId && c.Name == contact.Name);
+            //var existingContact = await _context.Contacts
+            //                                    .AnyAsync(c => c.UserId == userId && c.Name == contact.Name);
             var contactExists = await _context.Contacts
                                               .Where(c => c.UserId == userId && c.Id == contact.Id)
                                               .Include(c => c.PhoneNumbers)
                                               .FirstOrDefaultAsync();
-            if (existingContact == false || contactExists != null)
+            if (contactExists != null)
             {
                 return null;
             }
