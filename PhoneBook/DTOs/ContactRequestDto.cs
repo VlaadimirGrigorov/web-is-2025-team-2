@@ -10,5 +10,6 @@ namespace PhoneBook.DTOs
         public string? Address { get; set; }
         [Required]
         public List<PhoneNumberRequestDto> PhoneNumbers { get; set; } = new List<PhoneNumberRequestDto>();
+        public string? PhotoUrl { get; set; }
     }
 }

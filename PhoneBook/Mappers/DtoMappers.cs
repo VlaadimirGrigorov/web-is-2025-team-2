@@ -34,7 +34,10 @@ namespace PhoneBook.Mappers
                     {
                         Id = p.Id,
                         Number = p.Number
-                    }).ToList()
+                    }).ToList(),
+                PhotoUrl = contact.Photo != null && !string.IsNullOrEmpty(contact.Photo.FilePath)
+                            ? $"/api/contact_photos/retrievefile/{contact.Photo.FilePath}"
+                            : null
             };
         }
 

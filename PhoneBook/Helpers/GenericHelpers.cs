@@ -21,5 +21,23 @@ namespace PhoneBook.Helpers
                 return builder.ToString();
             }
         }
+        public static bool IsValidImageFileName(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName)) return false;
+            var lowerCaseFileName = fileName.ToLower();
+            return lowerCaseFileName.EndsWith(".jpg") || lowerCaseFileName.EndsWith(".jpeg") || lowerCaseFileName.EndsWith(".png");
+        }
+        public static string GetContentType(string path)
+        {
+            var ext = Path.GetExtension(path).ToLowerInvariant();
+            return ext switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".gif" => "image/gif",
+                _ => "application/octet-stream"
+            };
+        }
+
     }
 }

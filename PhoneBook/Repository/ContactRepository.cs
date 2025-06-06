@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using PhoneBook.Data;
 using PhoneBook.DTOs;
 using PhoneBook.Mappers;
 using PhoneBook.Models;
+using FileServ.Controllers.Helpers;
 
 namespace PhoneBook.Repository
 {
@@ -21,6 +21,7 @@ namespace PhoneBook.Repository
             var contacts = await _context.Contacts.
                                 Where(c => c.UserId == userId).
                                 Include(c => c.PhoneNumbers).
+                                Include(c => c.Photo).
                                 ToListAsync();
 
             return contacts.Select(DtoMappers.ToDto).ToList();
@@ -213,6 +214,71 @@ namespace PhoneBook.Repository
             }
 
             contact.Address = updatedContact.Address ?? contact.Address;
+        }
+
+        public async Task<ContactResponseDto> AddPhotoToContact(int userId, int contactId, string filePath)
+        {
+            var contact = await _context.Contacts
+                                        .Where(c => c.UserId == userId && c.Id == contactId)
+                                        .Include(c => c.Photo)
+                                        .FirstOrDefaultAsync();
+
+            if (contact == null)
+            {
+                return null; // Or throw an exception
+            }
+
+            if (contact.Photo != null)
+            {
+                // Create an instance of UploadHandler to call the Remove method
+                var uploadHandler = new UploadHandler();
+                uploadHandler.Remove(contact.Photo.FilePath);
+                _context.Photos.Remove(contact.Photo);
+            }
+
+            var newPhoto = new Photo { FilePath = filePath };
+            contact.Photo = newPhoto;
+
+            await _context.SaveChangesAsync();
+
+            return DtoMappers.ToDto(contact);
+        }
+
+        public async Task<bool> DeletePhotoFromContact(int userId, int contactId)
+        {
+            var contact = await _context.Contacts
+                                        .Where(c => c.UserId == userId && c.Id == contactId)
+                                        .Include(c => c.Photo)
+                                        .FirstOrDefaultAsync();
+
+            if (contact == null || contact.Photo == null)
+            {
+                return false; // Contact or photo not found
+            }
+
+            var filePath = contact.Photo.FilePath;
+
+            _context.Photos.Remove(contact.Photo);
+
+            // Create an instance of UploadHandler to call the Remove method
+            var uploadHandler = new UploadHandler();
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                await uploadHandler.Remove(filePath);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+        public string? GetPhotoFileName(int userId, int id)
+        {
+            var contact = _context.Contacts
+                                  .Where(c => c.UserId == userId && c.Id == id)
+                                  .Include(c => c.Photo)
+                                  .FirstOrDefault();
+
+            return contact?.Photo?.FilePath;
         }
     }
 }

@@ -8,15 +8,17 @@ function App() {
         email: "",
         address: "",
         phoneNumbers: [],
-        imageUrl: "",
+        photoUrl: "", // Changed from imageUrl to photoUrl for consistency
     });
     const [editingContactId, setEditingContactId] = useState(null); // Stores actual ID for API
     const [editIndex, setEditIndex] = useState(null); // Stores array index for UI, if needed
+    const [selectedFile, setSelectedFile] = useState(null); // For photo upload
 
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
-    const API_BASE_URL = "https://localhost:7192/api"; // Ensure your API backend runs on this port
+    const APP_ORIGIN = "https://localhost:7192"; // For constructing full URLs for images
+    const API_BASE_URL = `${APP_ORIGIN}/api`; // Ensure your API backend runs on this port
 
     // Function to clear error messages
     const clearErrorMessage = () => setErrorMessage("");
@@ -52,8 +54,9 @@ function App() {
                 id: contact.id,
                 name: contact.name,
                 address: contact.address,
-                email: contact.email,
+                email: contact.email, // Assuming email is part of your contact details
                 phoneNumbers: contact.phoneNumbers ? contact.phoneNumbers.map(pn => pn.number) : [],
+                photoUrl: contact.photoUrl || "", // Use photoUrl from backend
             }));
             setContacts(transformedContacts);
         } catch (error) {
@@ -92,6 +95,10 @@ function App() {
         setNewContact({ ...newContact, [e.target.name]: e.target.value });
     };
 
+    const handleFileChange = (event) => {
+        setSelectedFile(event.target.files[0]);
+    };
+
     const handlePhoneChange = (e, index) => {
         const updatedPhoneNumbers = [...newContact.phoneNumbers];
         updatedPhoneNumbers[index] = e.target.value;
@@ -112,7 +119,7 @@ function App() {
             //Email: newContact.email, // Ensure backend ContactRequestDto has Email
             Address: newContact.address,
             PhoneNumbers: newContact.phoneNumbers.map(numStr => ({ number: numStr })).filter(pn => pn.number && pn.number.trim() !== ""),
-            // Photo/imageUrl is not sent here; backend uses PhotoUrl from a separate upload mechanism.
+            // Photo/photoUrl is not sent here; backend uses PhotoUrl from a separate upload mechanism.
         };
 
         let url = `${API_BASE_URL}/contacts`;
@@ -140,23 +147,85 @@ function App() {
                 throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
             }
 
-            setNewContact({ id: null, name: "", email: "", address: "", phoneNumbers: [], imageUrl: "" });
+            let responseData = {};
+            if (method === 'POST') {
+                responseData = await response.json(); // Get the created contact data
+            }
+
+            const contactIdForPhoto = editingContactId !== null ? editingContactId : responseData.id; // Use responseData.data.id if your DTO is nested in `data` property
+
+            if (selectedFile && contactIdForPhoto) {
+                await uploadPhoto(contactIdForPhoto, selectedFile);
+            }
+
+            setNewContact({ id: null, name: "", email: "", address: "", phoneNumbers: [], photoUrl: "" });
+            setSelectedFile(null);
+            if (document.getElementById('photo-upload-input')) { // Clear file input
+                document.getElementById('photo-upload-input').value = "";
+            }
             setEditingContactId(null);
             setEditIndex(null);
             await fetchContacts(); // Refresh list
         } catch (error) {
-            console.error("Failed to save contact:", error);
-            setErrorMessage(`Failed to save contact: ${error.message}`);
+            console.error("Failed to save contact or upload photo:", error);
+            setErrorMessage(`Failed to save contact or upload photo: ${error.message}`);
         } finally {
             setLoading(false);
         }
     };
 
+    const uploadPhoto = async (contactId, file) => {
+        const formData = new FormData();
+        formData.append('file', file); // Key 'file' must match backend parameter name
+
+        setLoading(true); // Optional: set loading state for photo upload specifically
+        // clearErrorMessage(); // Decide if you want to clear global errors or have specific photo error messages
+
+        try {
+            const authToken = localStorage.getItem('authToken');
+            const headers = {}; // Do NOT set Content-Type for FormData
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+
+            const response = await fetch(`${API_BASE_URL}/contacts/${contactId}/photo`, {
+                method: 'POST',
+                headers: headers,
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Photo upload failed: ${response.status}, details: ${errorText}`);
+            }
+
+            // Photo uploaded successfully
+            // Optionally, update the contact's photoUrl in the contacts state immediately
+            // Or rely on the fetchContacts() in handleSubmit to refresh
+            console.log("Photo uploaded successfully");
+
+        } catch (error) {
+            console.error("Failed to upload photo:", error);
+            // Display a more specific error message for photo upload if desired
+            setErrorMessage(`Failed to upload photo: ${error.message}`);
+        } finally {
+            setSelectedFile(null); // Clear selected file after attempt
+            if (document.getElementById('photo-upload-input')) {
+                document.getElementById('photo-upload-input').value = "";
+            }
+            // setLoading(false); // Reset loading if it was set specifically for photo upload
+        }
+    };
+
     const editContact = (index) => {
         const contactToEdit = contacts[index];
-        setNewContact({ ...contactToEdit }); // Load contact data into form
+        setNewContact({ ...contactToEdit, photoUrl: contactToEdit.photoUrl || "" }); // Load contact data into form
         setEditingContactId(contactToEdit.id);
         setEditIndex(index); // Keep track of the original index if needed for UI
+        setSelectedFile(null); // Clear any selected file when starting an edit
+        if (document.getElementById('photo-upload-input')) {
+            document.getElementById('photo-upload-input').value = "";
+        }
         clearErrorMessage();
     };
 
@@ -209,10 +278,10 @@ function App() {
         const mergedContact = {
             id: `merged_${Date.now()}`, // Temporary client-side ID
             name: contact1.name || contact2.name,
-            email: contact1.email || contact2.email,
+            email: contact1.email || contact2.email, // Assuming email is part of your contact details
             address: contact1.address || contact2.address,
             phoneNumbers: mergedPhoneNumbers,
-            imageUrl: contact1.imageUrl || contact2.imageUrl || "https://via.placeholder.com/150",
+            photoUrl: contact1.photoUrl || contact2.photoUrl || "https://via.placeholder.com/150", // Use photoUrl
         };
         const updatedContacts = contacts.filter((_, index) => index !== index1 && index !== index2);
         setContacts([...updatedContacts, mergedContact].sort((a, b) => a.name.localeCompare(b.name)));
@@ -243,11 +312,20 @@ function App() {
                         {/* Input fields */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <input type="text" name="name" placeholder="Name (Required)" value={newContact.name} onChange={handleInputChange} required className="input-style" />
-                            {/*<input type="email" name="email" placeholder="Email" value={newContact.email} onChange={handleInputChange} className="input-style" />*/}
                             <input type="text" name="address" placeholder="Address" value={newContact.address} onChange={handleInputChange} className="input-style" />
-                            {/*<input type="text" name="imageUrl" placeholder="Image URL (for display)" value={newContact.imageUrl} onChange={handleInputChange} className="input-style" aria-describedby="imageUrlHelp" />*/}
                         </div>
-                        <p id="imageUrlHelp" className="text-xs text-gray-500 mb-4 -mt-3">Note: For displaying an image from a URL. Actual image uploads need a different setup.</p>
+
+                        <div className="mb-4">
+                            <label htmlFor="photo-upload-input" className="block text-sm font-medium text-gray-700 mb-1">Contact Photo (Optional)</label>
+                            <input
+                                id="photo-upload-input"
+                                type="file"
+                                accept="image/png, image/jpeg"
+                                onChange={handleFileChange}
+                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                            />
+                            {selectedFile && <p className="text-xs text-gray-500 mt-1">Selected: {selectedFile.name}</p>}
+                        </div>
 
                         <h3 className="text-lg font-medium text-gray-600 mb-2">Phone Numbers</h3>
                         {newContact.phoneNumbers.map((phone, index) => (
@@ -260,7 +338,15 @@ function App() {
                             {editingContactId !== null ? "Save Changes" : "Add Contact"}
                         </button>
                         {editingContactId !== null && (
-                            <button type="button" onClick={() => { setEditingContactId(null); setNewContact({ id: null, name: "", email: "", address: "", phoneNumbers: [], imageUrl: "" }); clearErrorMessage(); }} disabled={loading} className="btn-neutral ml-2">
+                            <button type="button" onClick={() => {
+                                setEditingContactId(null);
+                                setNewContact({ id: null, name: "", email: "", address: "", phoneNumbers: [], photoUrl: "" });
+                                setSelectedFile(null);
+                                if (document.getElementById('photo-upload-input')) {
+                                    document.getElementById('photo-upload-input').value = "";
+                                }
+                                clearErrorMessage();
+                            }} disabled={loading} className="btn-neutral ml-2">
                                 Cancel Edit
                             </button>
                         )}
@@ -278,10 +364,26 @@ function App() {
                     {contacts.map((contact, index) => (
                         <li key={contact.id} className="bg-white p-5 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
                             <div className="flex items-start space-x-4">
-                                {/* <img src={contact.imageUrl} alt={contact.name} className="w-20 h-20 rounded-full border-2 border-blue-300 object-cover shadow" onError={(e) => { e.target.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; e.target.alt = 'Image load error'; }}/> */}
+                                {contact.photoUrl && (
+                                    <img
+                                        src={`${APP_ORIGIN}${contact.photoUrl}`} // Corrected: Use APP_ORIGIN
+                                        alt={contact.name}
+                                        className="w-20 h-20 rounded-full border-2 border-blue-300 object-cover shadow"
+                                        onError={(e) => {
+                                            e.target.onerror = null; // Prevent infinite loops if placeholder also fails
+                                            e.target.src = 'https://via.placeholder.com/150/CCCCCC/FFFFFF?text=Load%20Error';
+                                            e.target.alt = 'Image load error';
+                                        }}
+                                    />
+                                )}
+                                {!contact.photoUrl && (
+                                    <div className="w-20 h-20 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center text-gray-400 text-xs object-cover shadow">
+                                        No Photo
+                                    </div>
+                                )}
                                 <div className="flex-grow">
                                     <h3 className="text-xl font-semibold text-blue-700">{contact.name}</h3>
-                                    {contact.email && <p className="text-gray-600">{contact.email}</p>}
+                                    {contact.email && <p className="text-gray-600">{contact.email}</p>} {/* Assuming email is part of your contact details */}
                                     {contact.address && <p className="text-gray-500 text-sm">{contact.address}</p>}
                                     {contact.phoneNumbers && contact.phoneNumbers.length > 0 && (
                                         <div className="mt-2">

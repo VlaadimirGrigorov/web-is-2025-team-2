@@ -70,11 +70,13 @@ using (var scope = app.Services.CreateScope())
 
     // 1) Изтриваме всички редове (DELETE) от таблиците в правилния ред:
     //    - Най-напред дъщерните таблици (PhoneNumbers), после parent (Contacts), накрая Users.
+    await dbContext.Database.ExecuteSqlRawAsync("DELETE FROM `Photos`;");
     await dbContext.Database.ExecuteSqlRawAsync("DELETE FROM `PhoneNumbers`;");
     await dbContext.Database.ExecuteSqlRawAsync("DELETE FROM `Contacts`;");
     await dbContext.Database.ExecuteSqlRawAsync("DELETE FROM `Users`;");
 
     // 2) Рестартираме автоинкремент брояча за всяка таблица:
+    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Photos` AUTO_INCREMENT = 1;");
     await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `PhoneNumbers` AUTO_INCREMENT = 1;");
     await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Contacts` AUTO_INCREMENT = 1;");
     await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Users` AUTO_INCREMENT = 1;");

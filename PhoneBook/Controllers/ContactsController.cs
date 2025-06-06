@@ -4,6 +4,8 @@ using PhoneBook.DTOs;
 using PhoneBook.Helpers;
 using PhoneBook.Repository;
 using System.Security.Claims;
+using FileServ.Controllers.Helpers;
+using PhoneBook.Helpers;
 
 namespace WebHomework.Controllers
 {
@@ -28,7 +30,7 @@ namespace WebHomework.Controllers
 
                 return Ok(await _contactRepository.GetContacts(userId));
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
             }
@@ -49,7 +51,7 @@ namespace WebHomework.Controllers
 
                 return contact;
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
             }
@@ -81,7 +83,7 @@ namespace WebHomework.Controllers
 
                 return CreatedAtAction(nameof(GetContact), new { id = result.Data?.Id }, result);
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
             }
@@ -111,7 +113,7 @@ namespace WebHomework.Controllers
 
                 return CreatedAtAction(nameof(GetContact), new { id = result.Data?.Id }, result.Data);
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
             }
@@ -125,7 +127,7 @@ namespace WebHomework.Controllers
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
                 var contact = await _contactRepository.DeleteContact(userId, id);
-                
+
                 if (contact == null)
                 {
                     return NotFound($"Contact with id {id} doesn't exist!");
@@ -133,7 +135,7 @@ namespace WebHomework.Controllers
 
                 return contact;
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
             }
@@ -164,7 +166,7 @@ namespace WebHomework.Controllers
 
                 return Ok(result.Data);
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
             }
@@ -186,7 +188,7 @@ namespace WebHomework.Controllers
 
                 return contact;
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
             }
@@ -222,5 +224,103 @@ namespace WebHomework.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
             }
         }
+
+        [HttpPost("{id}/photo")]
+        public async Task<IActionResult> AddPhotoToContact(int id, IFormFile file)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+                if (file == null || file.Length == 0)
+                {
+                    return BadRequest("Upload a valid file.");
+                }
+
+                var uploadHandler = new UploadHandler();
+                var fileName = await uploadHandler.Upload(file);
+
+                if (!GenericHelpers.IsValidImageFileName(fileName))
+                {
+                    // UploadHandler.Upload now returns error messages directly if validation fails.
+                    // IsValidImageFileName is a secondary check for controller-side logic if needed,
+                    // but the primary error comes from uploadHandler.Upload
+                    return BadRequest(fileName);
+                }
+
+                var contactDto = await _contactRepository.AddPhotoToContact(userId, id, fileName);
+
+                if (contactDto == null)
+                {
+                    return NotFound($"Contact with id {id} not found.");
+                }
+
+                return Ok(contactDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error uploading photo: {ex.Message}");
+            }
+        }
+
+
+
+        [HttpDelete("{id}/photo")]
+        public async Task<IActionResult> DeletePhotoFromContact(int id)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+                var success = await _contactRepository.DeletePhotoFromContact(userId, id);
+
+                if (!success)
+                {
+                    return NotFound($"Photo or contact with id {id} not found.");
+                }
+
+                return Ok("Photo deleted successfully.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error deleting photo: {ex.Message}");
+            }
+        }
+
+        [HttpGet("{id}/photo")]
+        public IActionResult GetPhotoFromContact(int id)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+                // You might retrieve the file name from DB based on userId and contactId
+                var photoFileName = _contactRepository.GetPhotoFileName(userId, id);
+
+                if (string.IsNullOrEmpty(photoFileName))
+                {
+                    return NotFound("Photo not found.");
+                }
+
+                var filePath = Path.Combine("Uploads", photoFileName);
+
+                if (!System.IO.File.Exists(filePath))
+                {
+                    return NotFound("Photo file not found on server.");
+                }
+
+                var imageBytes = System.IO.File.ReadAllBytes(filePath);
+                var contentType = GenericHelpers.GetContentType(filePath); // Detect image MIME type based on file extension
+
+                return File(imageBytes, contentType);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error retrieving photo: {ex.Message}");
+            }
+        }
+
+
+
     }
 }
