@@ -63,12 +63,23 @@ namespace WebHomework.Controllers
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
                 var result = await _contactRepository.AddContact(userId, contactDto);
-                if (result == null)
+                if (!result.Success)
                 {
-                    return Conflict("Contact already exists!");
+                    if (result.Error == "Name field cannot be empty!")
+                    {
+                        return Conflict(result.Error);
+                    }
+                    if (result.Error == $"Cannot have contact with same name {contactDto.Name}.")
+                    {
+                        return Conflict(result.Error);
+                    }
+                    if (result.Error == $"Contact with id {result.Data?.Id} already exists!")
+                    {
+                        return Conflict(result.Error);
+                    }
                 }
 
-                return CreatedAtAction(nameof(GetContact), new { id = result?.Id }, result);
+                return CreatedAtAction(nameof(GetContact), new { id = result.Data?.Id }, result);
             }
             catch(Exception)
             {

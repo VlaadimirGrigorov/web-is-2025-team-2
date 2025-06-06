@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using PhoneBook.Data;
 using PhoneBook.DTOs;
 using PhoneBook.Mappers;
@@ -33,27 +34,43 @@ namespace PhoneBook.Repository
 
             return contact == null ? null : DtoMappers.ToDto(contact);
         }
-        public async Task<ContactResponseDto> AddContact(int userId, ContactRequestDto contactDto)
+        public async Task<RepositoryResult<ContactResponseDto>> AddContact(int userId, ContactRequestDto contactDto)
         {
             var contact = DtoMappers.ToEntity(contactDto);
             contact.UserId = userId;
 
+            if (contactDto.Name == null)
+            {
+                return RepositoryResult<ContactResponseDto>.Fail("Name field cannot be empty!");
+            }
+
+            if (contact.PhoneNumbers.Count == 0)
+            {
+                return RepositoryResult<ContactResponseDto>.Fail("Phone number field cannot be empty!");
+            }
+
             // Check if a contact with the same name and userId, or same contactId and userId already exists
-            //var existingContact = await _context.Contacts
-            //                                    .AnyAsync(c => c.UserId == userId && c.Name == contact.Name);
+            var exisitingContact = await _context.Contacts.Where(c => c.UserId == userId && c.Name == contact.Name)
+                                                          .Include(c => c.PhoneNumbers)
+                                                          .FirstOrDefaultAsync();
+            if (exisitingContact != null)
+            {
+                return RepositoryResult<ContactResponseDto>.Fail($"Cannot have contact with same name {exisitingContact.Name}.");
+            }
+
             var contactExists = await _context.Contacts
                                               .Where(c => c.UserId == userId && c.Id == contact.Id)
                                               .Include(c => c.PhoneNumbers)
                                               .FirstOrDefaultAsync();
             if (contactExists != null)
             {
-                return null;
+                return RepositoryResult<ContactResponseDto>.Fail($"Cannot have contact with same id {contactExists.Id}.");
             }
 
             _context.Contacts.Add(contact);
             await _context.SaveChangesAsync();
 
-            return DtoMappers.ToDto(contact);
+            return RepositoryResult<ContactResponseDto>.Ok(DtoMappers.ToDto(contact));
         }
 
         public async Task<RepositoryResult<PhoneNumberResponseDto>> AddPhoneToContact(int userId, int id, PhoneNumberRequestDto phoneNumberDto)

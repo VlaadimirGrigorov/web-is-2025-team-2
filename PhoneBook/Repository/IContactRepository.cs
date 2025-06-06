@@ -8,7 +8,7 @@ namespace PhoneBook.Repository
     {
         Task<List<ContactResponseDto>> GetContacts(int userId);
         Task<ContactResponseDto?> GetContact(int userId, int id);
-        Task<ContactResponseDto> AddContact(int userId, ContactRequestDto contactDto);
+        Task<RepositoryResult<ContactResponseDto>> AddContact(int userId, ContactRequestDto contactDto);
         Task<ContactResponseDto> DeleteContact(int userId, int id);
         Task<ContactResponseDto> UpdateContact(int userId, int id, ContactRequestDto updatedContactDto);
         Task<RepositoryResult<PhoneNumberResponseDto>> AddPhoneToContact(int userId, int contactId, PhoneNumberRequestDto dto);
