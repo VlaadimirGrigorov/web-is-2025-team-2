@@ -35,6 +35,19 @@ namespace PhoneBook.Repository
 
             return contact == null ? null : DtoMappers.ToDto(contact);
         }
+        public async Task<List<ContactResponseDto>> SearchContactsAsync(int userId, string searchTerm, int limit)
+        {
+            var normalizedSearchTerm = searchTerm.ToLower();
+            var contacts = await _context.Contacts
+                                       .Where(c => c.UserId == userId &&
+                                                   c.Name.ToLower().StartsWith(normalizedSearchTerm))
+                                       .Include(c => c.PhoneNumbers)
+                                       .OrderBy(c => c.Name)
+                                       .Take(limit)
+                                       .ToListAsync();
+
+            return contacts.Select(DtoMappers.ToDto).ToList();
+        }
         public async Task<RepositoryResult<ContactResponseDto>> AddContact(int userId, ContactRequestDto contactDto)
         {
             var contact = DtoMappers.ToEntity(contactDto);

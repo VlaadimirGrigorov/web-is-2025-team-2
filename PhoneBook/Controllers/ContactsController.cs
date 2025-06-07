@@ -57,6 +57,29 @@ namespace WebHomework.Controllers
             }
         }
 
+        [HttpGet("search")]
+        public async Task<ActionResult<List<ContactResponseDto>>> SearchContacts([FromQuery] string searchTerm)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                int limit = 5; // Define a default limit, e.g., 5 or 10
+
+                if (string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    return Ok(new List<ContactResponseDto>()); // Return empty list if search term is empty
+                }
+
+                var contacts = await _contactRepository.SearchContactsAsync(userId, searchTerm, limit);
+                return Ok(contacts);
+            }
+            catch (Exception)
+            {
+                // Consider more specific error logging if available
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error performing search.");
+            }
+        }
+
         [HttpPost]
         public async Task<ActionResult<ContactResponseDto>> AddContact(ContactRequestDto contactDto)
         {

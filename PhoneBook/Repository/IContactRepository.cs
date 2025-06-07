@@ -17,5 +17,7 @@ namespace PhoneBook.Repository
         Task<ContactResponseDto> AddPhotoToContact(int userId, int contactId, string filePath);
         Task<bool> DeletePhotoFromContact(int userId, int contactId);
         string? GetPhotoFileName(int userId, int id);
+        Task<List<ContactResponseDto>> SearchContactsAsync(int userId, string searchTerm, int limit);
+
     }
 }
