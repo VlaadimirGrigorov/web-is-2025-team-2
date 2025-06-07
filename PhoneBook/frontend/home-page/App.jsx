@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
+import './AppSpecific.css';
 
 function App() {
     const [contacts, setContacts] = useState([]);
@@ -290,8 +291,13 @@ function App() {
 
 
     return (
-        <div className="min-h-screen bg-gray-100 p-4">
+        <div id="app-jsx-container" className="min-h-screen bg-gray-100 p-4">
             <div className="max-w-4xl mx-auto">
+                <div className="flex justify-end mb-4">
+                    <button onClick={logout} className="btn-secondary">
+                        Logout
+                    </button>
+                </div>
                 <h1 className="text-3xl font-bold text-center text-blue-600 mb-6">Contact Management</h1>
 
                 {errorMessage && (
@@ -311,8 +317,8 @@ function App() {
                     <form onSubmit={handleSubmit}>
                         {/* Input fields */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <input type="text" name="name" placeholder="Name (Required)" value={newContact.name} onChange={handleInputChange} required className="input-style" />
-                            <input type="text" name="address" placeholder="Address" value={newContact.address} onChange={handleInputChange} className="input-style" />
+                            <input type="text" name="name" placeholder="Name (Required)" value={newContact.name} onChange={handleInputChange} required className="input-style w-1/3" />
+                            <input type="text" name="address" placeholder="Address" value={newContact.address} onChange={handleInputChange} className="input-style w-1/3" />
                         </div>
 
                         <div className="mb-4">
@@ -322,7 +328,7 @@ function App() {
                                 type="file"
                                 accept="image/png, image/jpeg"
                                 onChange={handleFileChange}
-                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                className="block w-1/3 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                             />
                             {selectedFile && <p className="text-xs text-gray-500 mt-1">Selected: {selectedFile.name}</p>}
                         </div>
@@ -330,13 +336,17 @@ function App() {
                         <h3 className="text-lg font-medium text-gray-600 mb-2">Phone Numbers</h3>
                         {newContact.phoneNumbers.map((phone, index) => (
                             <div key={index} className="flex mb-2 items-center">
-                                <input type="tel" value={phone} onChange={(e) => handlePhoneChange(e, index)} placeholder="Phone Number" className="input-style flex-grow" />
+                                <input type="tel" value={phone} onChange={(e) => handlePhoneChange(e, index)} placeholder="Phone Number" className="input-style w-1/3" />
                             </div>
                         ))}
-                        <button type="button" onClick={addPhoneNumber} disabled={loading} className="btn-secondary mr-2">Add Phone</button>
-                        <button type="submit" disabled={loading} className="btn-primary">
-                            {editingContactId !== null ? "Save Changes" : "Add Contact"}
-                        </button>
+                        <div style={{ display: 'flex', gap: '12px', marginBottom: '1rem' }}>
+                            <button type="button" onClick={addPhoneNumber} disabled={loading} className="btn-secondary">
+                                Add Phone
+                            </button>
+                            <button type="submit" disabled={loading} className="btn-primary">
+                                Add Contact
+                            </button>
+                        </div>
                         {editingContactId !== null && (
                             <button type="button" onClick={() => {
                                 setEditingContactId(null);
@@ -395,7 +405,7 @@ function App() {
                                     )}
                                 </div>
                                 <div className="flex flex-col space-y-2 items-end">
-                                    <button onClick={() => editContact(index)} disabled={loading} className="btn-edit text-xs py-1 px-2">Edit</button>
+                                    <button onClick={() => editContact(index)} disabled={loading} className="btn-edit text-xs py-1 px-2 mr-2">Edit</button>
                                     <button onClick={() => deleteContact(index)} disabled={loading} className="btn-delete text-xs py-1 px-2">Delete</button>
                                     {index + 1 < contacts.length && (
                                         <button onClick={() => mergeContacts(index, index + 1)} disabled={loading} className="btn-neutral text-xs py-1 px-2">Merge Next</button>
@@ -415,7 +425,7 @@ function App() {
 const styles = `
 .input-style {
   display: block;
-  width: 100%;
+  /* width: 35%; */
   padding: 0.75rem;
   margin-bottom: 1rem;
   border: 1px solid #D1D5DB; /* gray-300 */
@@ -485,6 +495,7 @@ const styles = `
 //TODO add btn for logout
 function logout() {
     localStorage.removeItem('loggedInUser');
+    localStorage.removeItem('authToken');
     window.location.href = "../login-page/index.html";
 }
 
