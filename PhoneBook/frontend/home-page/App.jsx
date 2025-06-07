@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from "react";
-import './AppSpecific.css';
+import './App.css';
 
 function App() {
     const [contacts, setContacts] = useState([]);
@@ -59,6 +59,7 @@ function App() {
                 phoneNumbers: contact.phoneNumbers ? contact.phoneNumbers.map(pn => pn.number) : [],
                 photoUrl: contact.photoUrl || "", // Use photoUrl from backend
             }));
+            console.log("Transformed contacts:", transformedContacts); // Added log
             setContacts(transformedContacts);
         } catch (error) {
             console.error("Could not fetch contacts:", error);
@@ -371,49 +372,58 @@ function App() {
                 </div>
 
                 <ul className="space-y-4">
-                    {contacts.map((contact, index) => (
-                        <li key={contact.id} className="bg-white p-5 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
-                            <div className="flex items-start space-x-4">
-                                {contact.photoUrl && (
-                                    <img
-                                        src={`${APP_ORIGIN}${contact.photoUrl}`} // Corrected: Use APP_ORIGIN
-                                        alt={contact.name}
-                                        className="w-20 h-20 rounded-full border-2 border-blue-300 object-cover shadow"
-                                        onError={(e) => {
-                                            e.target.onerror = null; // Prevent infinite loops if placeholder also fails
-                                            e.target.src = 'https://via.placeholder.com/150/CCCCCC/FFFFFF?text=Load%20Error';
-                                            e.target.alt = 'Image load error';
-                                        }}
-                                    />
-                                )}
-                                {!contact.photoUrl && (
-                                    <div className="w-20 h-20 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center text-gray-400 text-xs object-cover shadow">
-                                        No Photo
-                                    </div>
-                                )}
-                                <div className="flex-grow">
-                                    <h3 className="text-xl font-semibold text-blue-700">{contact.name}</h3>
-                                    {contact.email && <p className="text-gray-600">{contact.email}</p>} {/* Assuming email is part of your contact details */}
-                                    {contact.address && <p className="text-gray-500 text-sm">{contact.address}</p>}
-                                    {contact.phoneNumbers && contact.phoneNumbers.length > 0 && (
-                                        <div className="mt-2">
-                                            <h4 className="font-medium text-xs text-gray-500">Phones:</h4>
-                                            <ul className="list-disc list-inside ml-1">
-                                                {contact.phoneNumbers.map((phone, phoneIdx) => <li key={phone + phoneIdx} className="text-gray-600 text-sm">{phone}</li>)}
-                                            </ul>
+                    {contacts.map((contact, index) => {
+                        const imageUrl = contact.photoUrl ? `${APP_ORIGIN}${contact.photoUrl}` : null;
+                        console.log(`Contact: ${contact.name}, Photo URL: ${contact.photoUrl}, Full Image SRC: ${imageUrl}`); // Added log
+
+                        return (
+                            <li key={contact.id} className="bg-white p-5 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+                                <div className="flex items-start space-x-4">
+                                    {contact.photoUrl && (
+                                        <img
+                                            src={imageUrl} // Use the logged imageUrl
+                                            alt={contact.name}
+                                            className="w-20 h-20 rounded-full border-2 border-blue-300 object-cover shadow"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = 'https://via.placeholder.com/150/CCCCCC/FFFFFF?text=Load%20Error';
+                                                e.target.alt = 'Image load error';
+                                                console.error(`Error loading image for ${contact.name}:`, imageUrl, e);
+                                            }}
+                                            onLoad={() => {
+                                                console.log(`Image loaded successfully for ${contact.name}:`, imageUrl);
+                                            }}
+                                        />
+                                    )}
+                                    {!contact.photoUrl && (
+                                        <div className="w-20 h-20 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center text-gray-400 text-xs object-cover shadow">
+                                            No Photo
                                         </div>
                                     )}
+                                    <div className="flex-grow">
+                                        <h3 className="text-xl font-semibold text-blue-700">{contact.name}</h3>
+                                        {contact.email && <p className="text-gray-600">{contact.email}</p>} {/* Assuming email is part of your contact details */}
+                                        {contact.address && <p className="text-gray-500 text-sm">{contact.address}</p>}
+                                        {contact.phoneNumbers && contact.phoneNumbers.length > 0 && (
+                                            <div className="mt-2">
+                                                <h4 className="font-medium text-xs text-gray-500">Phones:</h4>
+                                                <ul className="list-disc list-inside ml-1">
+                                                    {contact.phoneNumbers.map((phone, phoneIdx) => <li key={phone + phoneIdx} className="text-gray-600 text-sm">{phone}</li>)}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col space-y-2 items-end">
+                                        <button onClick={() => editContact(index)} disabled={loading} className="btn-edit text-xs py-1 px-2 mr-2">Edit</button>
+                                        <button onClick={() => deleteContact(index)} disabled={loading} className="btn-delete text-xs py-1 px-2">Delete</button>
+                                        {index + 1 < contacts.length && (
+                                            <button onClick={() => mergeContacts(index, index + 1)} disabled={loading} className="btn-neutral text-xs py-1 px-2">Merge Next</button>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="flex flex-col space-y-2 items-end">
-                                    <button onClick={() => editContact(index)} disabled={loading} className="btn-edit text-xs py-1 px-2 mr-2">Edit</button>
-                                    <button onClick={() => deleteContact(index)} disabled={loading} className="btn-delete text-xs py-1 px-2">Delete</button>
-                                    {index + 1 < contacts.length && (
-                                        <button onClick={() => mergeContacts(index, index + 1)} disabled={loading} className="btn-neutral text-xs py-1 px-2">Merge Next</button>
-                                    )}
-                                </div>
-                            </div>
-                        </li>
-                    ))}
+                            </li>
+                        );
+                    })}
                 </ul>
                 {!contacts.length && !loading && <p className="text-center text-gray-500 mt-6">No contacts found. Try adding some!</p>}
             </div>
