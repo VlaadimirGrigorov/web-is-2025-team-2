@@ -12,6 +12,6 @@ namespace PhoneBook.Models
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
         public Photo? Photo { get; set; } // Потребителят може да има снимка
         public int UserId { get; set; } // Външен ключ към User
-        public User? User { get; set; } // Навигационно свойство
+        public User? User { get; set; } // Навигационно свойство (da go mahnem?)
     }
 }

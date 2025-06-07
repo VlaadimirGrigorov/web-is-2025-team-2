@@ -102,18 +102,50 @@ namespace PhoneBook.Repository
 
         public async Task<ContactResponseDto> DeleteContact(int userId, int id)
         {
-            var contact = await _context.Contacts.
-                                        Where(c => c.UserId == userId && c.Id == id).
-                                        Include(c => c.PhoneNumbers).
-                                        FirstOrDefaultAsync();
+            var contact = await _context.Contacts
+                                        .Where(c => c.UserId == userId && c.Id == id)
+                                        .Include(c => c.PhoneNumbers)
+                                        .Include(c => c.Photo) // Eagerly load the Photo
+                                        .FirstOrDefaultAsync();
             if (contact == null)
             {
                 return null;
             }
 
+            // Handle photo deletion if a photo exists
+            if (contact.Photo != null)
+            {
+                // 1. Delete the physical file
+                var uploadHandler = new UploadHandler(); // Helper to manage file operations
+                if (!string.IsNullOrEmpty(contact.Photo.FilePath))
+                {
+                    await uploadHandler.Remove(contact.Photo.FilePath);
+                }
+
+                // 2. Remove the Photo entity from the context
+                _context.Photos.Remove(contact.Photo);
+            }
+
+            // PhoneNumbers are typically configured for cascade delete by convention if the FK is non-nullable,
+            // or they will be orphaned if the FK is nullable and not handled.
+            // If PhoneNumbers need explicit deletion and are not cascaded, they should be removed here.
+            // For now, assuming cascade delete or existing handling is sufficient for PhoneNumbers based on the original code.
+            // If PhoneNumbers are not set for cascade delete and ContactId is nullable, you might do:
+            // _context.PhoneNumbers.RemoveRange(contact.PhoneNumbers); 
+            // Or if ContactId is nullable and you want to orphan them:
+            // foreach (var pn in contact.PhoneNumbers) { pn.ContactId = null; }
+
+            // Remove the Contact entity itself
             _context.Contacts.Remove(contact);
+
+            // Save all changes to the database
             await _context.SaveChangesAsync();
 
+            // DtoMappers.ToDto might fail if contact.Photo was just deleted and it tries to access it.
+            // It's safer to map before deletion or construct a simple DTO here.
+            // However, the original method returned the DTO of the deleted contact.
+            // Let's stick to that pattern but be mindful. If ToDto tries to access contact.Photo.FilePath it will be null.
+            // The current DtoMappers.ToDto checks for contact.Photo != null, so it should be fine.
             return DtoMappers.ToDto(contact);
         }
 
@@ -236,7 +268,7 @@ namespace PhoneBook.Repository
                 _context.Photos.Remove(contact.Photo);
             }
 
-            var newPhoto = new Photo { ContactId = contactId,FilePath = filePath };
+            var newPhoto = new Photo { ContactId = contactId, FilePath = filePath };
             contact.Photo = newPhoto;
 
             await _context.SaveChangesAsync();

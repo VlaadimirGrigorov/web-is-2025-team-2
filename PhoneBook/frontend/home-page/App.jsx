@@ -1,6 +1,107 @@
 ﻿import { useState, useEffect } from "react";
 import './App.css';
 
+// It's good practice to define constants like this outside the component if they don't depend on props or state.
+const BASE64_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAMzMzAAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==';
+
+function AuthorizedImage({ srcEndpoint, altText }) {
+    const [imageUrl, setImageUrl] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false); // Added for explicit error tracking
+
+    useEffect(() => {
+        // When srcEndpoint changes, we need to reset states and fetch the new image.
+        setImageUrl(null); // Clear previous image
+        setLoading(true);
+        setError(false);
+
+        if (!srcEndpoint) {
+            setLoading(false);
+            setError(true); // Mark as error if no srcEndpoint is provided
+            return;
+        }
+
+        let isActive = true; // Flag to prevent state updates if component unmounts during fetch
+
+        const fetchImage = async () => {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                if (isActive) {
+                    setLoading(false);
+                    setError(true);
+                    console.error('Auth token not found for AuthorizedImage');
+                }
+                return;
+            }
+
+            try {
+                const response = await fetch(srcEndpoint, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+                }
+
+                const blob = await response.blob();
+                if (isActive) {
+                    const objectUrl = URL.createObjectURL(blob);
+                    setImageUrl(objectUrl);
+                    // setError(false); // Already false by default after reset
+                }
+            } catch (e) {
+                if (isActive) {
+                    console.error('Error fetching authorized image:', srcEndpoint, e);
+                    setError(true);
+                }
+            } finally {
+                if (isActive) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchImage();
+
+        // Cleanup function
+        return () => {
+            isActive = false; // Prevent state updates on unmounted component
+            if (imageUrl && imageUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(imageUrl); // imageUrl here refers to the state when effect was defined or last ran
+            }
+        };
+    }, [srcEndpoint]); // Effect dependencies: re-run if srcEndpoint changes.
+
+    if (loading) {
+        return <div className="min-w-[2rem] max-w-[6rem] w-[7vw] min-h-[2rem] max-h-[6rem] h-[7vw] rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center text-gray-400 text-xs object-cover shadow">Loading...</div>;
+    }
+
+    // If there was an error, or if imageUrl is still null after loading (e.g. if srcEndpoint was bad but didn't throw an error caught by catch)
+    if (error || !imageUrl) {
+        return (
+            <img
+                src={BASE64_PLACEHOLDER}
+                alt={altText || 'Image load error'}
+                className="min-w-[2rem] max-w-[6rem] w-[7vw] min-h-[2rem] max-h-[6rem] h-[7vw] rounded-full border-2 border-gray-300 object-cover shadow"
+            />
+        );
+    }
+
+    return (
+        <img
+            src={imageUrl}
+            alt={altText || 'Contact image'}
+            className="min-w-[2rem] max-w-[6rem] w-[7vw] min-h-[2rem] max-h-[6rem] h-[7vw] rounded-full border-2 border-blue-300 object-cover shadow"
+            onError={(e) => { // This onError is a fallback for the blob URL itself, if it somehow fails after loading
+                e.target.onerror = null; // Prevent infinite loop
+                e.target.src = BASE64_PLACEHOLDER;
+            }}
+        />
+    );
+}
+
 function App() {
     const [contacts, setContacts] = useState([]);
     const [newContact, setNewContact] = useState({
@@ -387,30 +488,19 @@ function App() {
 
                 <ul className="space-y-4">
                     {contacts.map((contact, index) => {
-                        const imageUrl = contact.photoUrl ? `${APP_ORIGIN}${contact.photoUrl}` : null;
-                        console.log(`Contact: ${contact.name}, Photo URL: ${contact.photoUrl}, Full Image SRC: ${imageUrl}`); // Added log
+                        // const imageUrl = contact.photoUrl ? `${API_BASE_URL}/contacts/${contact.id}/photo` : null; // Removed
+                        // console.log(`Contact: ${contact.name}, Photo URL: ${contact.photoUrl}, Full Image SRC: ${imageUrl}`); // Removed
 
                         return (
                             <li key={contact.id} className="bg-white p-5 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
                                 <div className="flex items-start space-x-4">
-                                    {contact.photoUrl && (
-                                        <img
-                                            src={imageUrl} // Use the logged imageUrl
-                                            alt={contact.name}
-                                            className="w-20 h-20 rounded-full border-2 border-blue-300 object-cover shadow"
-                                            onError={(e) => {
-                                                e.target.onerror = null;
-                                                e.target.src = 'https://via.placeholder.com/150/CCCCCC/FFFFFF?text=Load%20Error';
-                                                e.target.alt = 'Image load error';
-                                                console.error(`Error loading image for ${contact.name}:`, imageUrl, e);
-                                            }}
-                                            onLoad={() => {
-                                                console.log(`Image loaded successfully for ${contact.name}:`, imageUrl);
-                                            }}
+                                    {contact.photoUrl ? ( // Check if photoUrl exists to decide whether to attempt loading an image
+                                        <AuthorizedImage
+                                            srcEndpoint={`${API_BASE_URL}/contacts/${contact.id}/photo`}
+                                            altText={contact.name}
                                         />
-                                    )}
-                                    {!contact.photoUrl && (
-                                        <div className="w-20 h-20 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center text-gray-400 text-xs object-cover shadow">
+                                    ) : (
+                                        <div className="min-w-[2rem] max-w-[6rem] w-[7vw] min-h-[2rem] max-h-[6rem] h-[7vw] rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center text-gray-400 text-xs object-cover shadow">
                                             No Photo
                                         </div>
                                     )}

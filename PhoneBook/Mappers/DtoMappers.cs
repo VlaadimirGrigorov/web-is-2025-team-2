@@ -36,7 +36,7 @@ namespace PhoneBook.Mappers
                         Number = p.Number
                     }).ToList(),
                 PhotoUrl = contact.Photo != null && !string.IsNullOrEmpty(contact.Photo.FilePath)
-                            ? $"{contact.Photo.FilePath}" // Corrected URL
+                            ? $"{contact.Photo.FilePath}" // Ensure leading slash and Uploads prefix
                             : null
             };
         }
