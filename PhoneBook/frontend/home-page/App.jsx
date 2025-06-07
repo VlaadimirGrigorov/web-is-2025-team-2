@@ -98,6 +98,7 @@ function App() {
     };
 
     const handleFileChange = (event) => {
+        console.log("File changed")
         setSelectedFile(event.target.files[0]);
     };
 
@@ -149,14 +150,27 @@ function App() {
                 throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
             }
 
-            let responseData = {};
+            let newContactId = null;
             if (method === 'POST') {
-                responseData = await response.json(); // Get the created contact data
+                const fullResponse = await response.json();
+                if (fullResponse && fullResponse.data && typeof fullResponse.data.id !== 'undefined') {
+                    newContactId = fullResponse.data.id;
+                    console.log("New contact ID extracted:", newContactId); // For debugging
+                } else {
+                    console.error("Contact creation response did not contain expected data.id:", fullResponse);
+                    // Set errorMessage or throw to ensure it's handled
+                    setErrorMessage("Error: Could not get ID of new contact from server response. Photo upload may fail.");
+                    throw new Error("Could not extract new contact ID from server response.");
+                }
             }
 
-            const contactIdForPhoto = editingContactId !== null ? editingContactId : responseData.id; // Use responseData.data.id if your DTO is nested in `data` property
+            const contactIdForPhoto = editingContactId !== null ? editingContactId : newContactId;
 
+            console.log("UPLOADING PHOTO");
+            console.log(selectedFile);
+            console.log(contactIdForPhoto);
             if (selectedFile && contactIdForPhoto) {
+
                 await uploadPhoto(contactIdForPhoto, selectedFile);
             }
 

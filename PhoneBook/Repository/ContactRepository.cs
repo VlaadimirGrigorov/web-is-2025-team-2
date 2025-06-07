@@ -236,7 +236,7 @@ namespace PhoneBook.Repository
                 _context.Photos.Remove(contact.Photo);
             }
 
-            var newPhoto = new Photo { FilePath = filePath };
+            var newPhoto = new Photo { ContactId = contactId,FilePath = filePath };
             contact.Photo = newPhoto;
 
             await _context.SaveChangesAsync();
